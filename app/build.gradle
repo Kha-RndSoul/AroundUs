@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
 }
-
+plugins {
+    id 'com.google.gms.google-services'
+}
 android {
     namespace 'com.nhom9.aroundus'
     compileSdk {
@@ -40,4 +42,11 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
+
+    // Firebase BOM — quản lý version tự động
+    implementation platform('com.google.firebase:firebase-bom:33.1.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    // Cloudinary
+    implementation 'com.cloudinary:cloudinary-android:3.0.2'
 }

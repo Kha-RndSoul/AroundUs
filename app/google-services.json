@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "381541026917",
+    "project_id": "aroundus-2b448",
+    "storage_bucket": "aroundus-2b448.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381541026917:android:bacc21115c96485d308a8c",
+        "android_client_info": {
+          "package_name": "com.nhom9.aroundus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAycyerooSSL0T1k2REvEHBPl7M9EoKQ6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
