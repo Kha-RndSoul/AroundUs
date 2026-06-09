@@ -1,16 +1,20 @@
 package com.nhom9.aroundus.ui.home;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.nhom9.aroundus.R;
@@ -25,10 +29,14 @@ public class HomeFragment extends Fragment {
     private RecyclerView rvPlaces;
     private PlaceAdapter placeAdapter;
 
-    private List<Place> allPlaces = new ArrayList<>();
+    private EditText edtSearch;
+    private TextView btnFilter;
+
+    private final List<Place> allPlaces = new ArrayList<>();
+    private String currentCategory = "Tất cả";
 
     public HomeFragment() {
-        // Bắt buộc cần constructor rỗng cho Fragment
+        // Constructor rỗng bắt buộc cho Fragment
     }
 
     @Nullable
@@ -41,23 +49,19 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         rvPlaces = view.findViewById(R.id.rvPlaces);
+        edtSearch = view.findViewById(R.id.edtSearch);
+        btnFilter = view.findViewById(R.id.btnFilter);
+
         rvPlaces.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
         placeAdapter = new PlaceAdapter();
         rvPlaces.setAdapter(placeAdapter);
 
-        Button btnAll = view.findViewById(R.id.btnAll);
-        Button btnFood = view.findViewById(R.id.btnFood);
-        Button btnShopping = view.findViewById(R.id.btnShopping);
-        Button btnEntertainment = view.findViewById(R.id.btnEntertainment);
-
         createFakeData();
         placeAdapter.setPlaceList(allPlaces);
 
-        btnAll.setOnClickListener(v -> placeAdapter.setPlaceList(allPlaces));
-        btnFood.setOnClickListener(v -> filterByCategory("Quán ăn"));
-        btnShopping.setOnClickListener(v -> filterByCategory("Mua sắm"));
-        btnEntertainment.setOnClickListener(v -> filterByCategory("Khu vui chơi"));
+        setupSearch();
+        setupFilter();
 
         return view;
     }
@@ -85,13 +89,75 @@ public class HomeFragment extends Fragment {
         p3.setCategory("Khu vui chơi");
         p3.setAvgRating(4.7);
         allPlaces.add(p3);
+
+        Place p4 = new Place();
+        p4.setName("Highlands Coffee");
+        p4.setAddress("Khu vực Thủ Đức");
+        p4.setCategory("Cà phê");
+        p4.setAvgRating(4.3);
+        allPlaces.add(p4);
     }
 
-    private void filterByCategory(String category) {
+    private void setupSearch() {
+        edtSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Không cần xử lý
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applyFilter();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+    }
+
+    private void setupFilter() {
+        btnFilter.setOnClickListener(v -> {
+            String[] categories = {
+                    "Tất cả",
+                    "Quán ăn",
+                    "Cà phê",
+                    "Mua sắm",
+                    "Khu vui chơi"
+            };
+
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Chọn danh mục")
+                    .setItems(categories, (dialog, which) -> {
+                        currentCategory = categories[which];
+                        applyFilter();
+
+                        Toast.makeText(
+                                requireContext(),
+                                "Đang lọc: " + currentCategory,
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    })
+                    .show();
+        });
+    }
+
+    private void applyFilter() {
+        String keyword = edtSearch.getText().toString().trim().toLowerCase();
+
         List<Place> filteredList = new ArrayList<>();
 
         for (Place place : allPlaces) {
-            if (category.equals(place.getCategory())) {
+            boolean matchCategory =
+                    currentCategory.equals("Tất cả")
+                            || currentCategory.equals(place.getCategory());
+
+            boolean matchSearch =
+                    place.getName().toLowerCase().contains(keyword)
+                            || place.getAddress().toLowerCase().contains(keyword)
+                            || place.getCategory().toLowerCase().contains(keyword);
+
+            if (matchCategory && matchSearch) {
                 filteredList.add(place);
             }
         }
