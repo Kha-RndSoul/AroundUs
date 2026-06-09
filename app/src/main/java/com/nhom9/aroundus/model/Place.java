@@ -1,6 +1,10 @@
 package com.nhom9.aroundus.model;
 
-public class Place {
+import java.io.Serializable;
+
+public class Place implements Serializable {
+    private static final long serialVersionUID = 1L; // Đảm bảo tính toàn vẹn khi truyền file
+
     private String placeId;
     private String name;
     private String address;
