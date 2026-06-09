@@ -37,9 +37,8 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
         Place place = placeList.get(position);
 
         holder.tvPlaceName.setText(place.getName());
-        holder.tvPlaceAddress.setText(place.getAddress());
         holder.tvPlaceCategory.setText(place.getCategory());
-        holder.tvPlaceRating.setText("Đánh giá: " + place.getAvgRating());
+        holder.tvPlaceMeta.setText("⭐ " + place.getAvgRating() + " · " + place.getAddress());
 
         holder.itemView.setOnClickListener(v -> {
             Toast.makeText(
@@ -58,17 +57,17 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
     static class PlaceViewHolder extends RecyclerView.ViewHolder {
 
         TextView tvPlaceName;
-        TextView tvPlaceAddress;
         TextView tvPlaceCategory;
-        TextView tvPlaceRating;
+        TextView tvPlaceMeta;
+        TextView btnFavorite;
 
         public PlaceViewHolder(@NonNull View itemView) {
             super(itemView);
 
             tvPlaceName = itemView.findViewById(R.id.tvPlaceName);
-            tvPlaceAddress = itemView.findViewById(R.id.tvPlaceAddress);
             tvPlaceCategory = itemView.findViewById(R.id.tvPlaceCategory);
-            tvPlaceRating = itemView.findViewById(R.id.tvPlaceRating);
+            tvPlaceMeta = itemView.findViewById(R.id.tvPlaceMeta);
+            btnFavorite = itemView.findViewById(R.id.btnFavorite);
         }
     }
 }
