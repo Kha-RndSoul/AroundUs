@@ -9,6 +9,7 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,7 +41,7 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         rvPlaces = view.findViewById(R.id.rvPlaces);
-        rvPlaces.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvPlaces.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
         placeAdapter = new PlaceAdapter();
         rvPlaces.setAdapter(placeAdapter);

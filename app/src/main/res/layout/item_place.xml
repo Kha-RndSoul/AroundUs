@@ -1,42 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:layout_marginBottom="8dp"
-    android:background="#EEEEEE">
+    android:layout_height="210dp"
+    android:layout_margin="6dp"
+    android:background="#DDDDDD">
 
-    <TextView
-        android:id="@+id/tvPlaceName"
+    <ImageView
+        android:id="@+id/ivPlaceImage"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Tên địa điểm"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tvPlaceAddress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Địa chỉ"
-        android:textSize="14sp"
-        android:paddingTop="4dp" />
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="#BDBDBD" />
 
     <TextView
         android:id="@+id/tvPlaceCategory"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Danh mục"
-        android:textSize="14sp"
-        android:paddingTop="4dp" />
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_margin="8dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:gravity="center"
+        android:text="Ăn uống"
+        android:textSize="12sp"
+        android:textColor="#FFFFFF"
+        android:background="#66000000" />
 
     <TextView
-        android:id="@+id/tvPlaceRating"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Đánh giá: 0.0"
-        android:textSize="14sp"
-        android:paddingTop="4dp" />
+        android:id="@+id/btnFavorite"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="8dp"
+        android:gravity="center"
+        android:text="♡"
+        android:textSize="22sp"
+        android:textColor="#FFFFFF"
+        android:background="#66000000" />
 
-</LinearLayout>
+    <LinearLayout
+        android:id="@+id/infoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:gravity="bottom"
+        android:padding="10dp"
+        android:background="#99000000">
+
+        <TextView
+            android:id="@+id/tvPlaceName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tên địa điểm"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/tvPlaceMeta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⭐ 4.5 · Thủ Đức"
+            android:textSize="12sp"
+            android:textColor="#EEEEEE"
+            android:maxLines="1" />
+    </LinearLayout>
+
+</FrameLayout>
