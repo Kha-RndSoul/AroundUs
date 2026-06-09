@@ -187,9 +187,9 @@ public class PlaceDetailActivity extends AppCompatActivity implements OnMapReady
         });
     }
 
-    private void setupRecyclerView() { /* Như cũ */ }
-    private void loadReviewsFromFirestore() { /* Như cũ */ }
-    private void openGoogleMapsByQuery() { /* Như cũ */ }
-    private void showWriteReviewDialog() { /* Như cũ */ }
-    private void updatePlaceRatingOnFirestore(int newRating) { /* Như cũ */ }
+    private void setupRecyclerView() {  }
+    private void loadReviewsFromFirestore() {  }
+    private void openGoogleMapsByQuery() {  }
+    private void showWriteReviewDialog() { }
+    private void updatePlaceRatingOnFirestore(int newRating) {  }
 }

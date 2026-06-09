@@ -25,6 +25,10 @@
         <activity android:name=".MainActivity"/>
         <activity android:name=".ui.auth.LoginActivity"/>
         <activity android:name=".ui.auth.RegisterActivity"/>
+        <activity
+            android:name=".ui.place.PlaceDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <!-- api gg map -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
