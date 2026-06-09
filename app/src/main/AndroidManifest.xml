@@ -25,7 +25,10 @@
         <activity android:name=".MainActivity"/>
         <activity android:name=".ui.auth.LoginActivity"/>
         <activity android:name=".ui.auth.RegisterActivity"/>
-
+        <!-- api gg map -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="YOUR_API_KEY_HERE" />
     </application>
 
 </manifest>

@@ -8,7 +8,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Chọn mức độ hài lòng của bạn:"
+        android:text="Mức độ hài lòng của bạn:"
+        android:textColor="#333333"
         android:textSize="14sp"
         android:layout_marginBottom="8dp"/>
 
@@ -26,8 +27,9 @@
         android:id="@+id/edtCommentInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nhập bình luận, chia sẻ trải nghiệm..."
+        android:hint="Chia sẻ trải nghiệm của bạn về địa điểm này..."
         android:inputType="textMultiLine"
         android:lines="3"
-        android:gravity="top"/>
+        android:gravity="top"
+        android:textSize="14sp"/>
 </LinearLayout>
