@@ -1,25 +1,14 @@
 package com.nhom9.aroundus.ui.place;
 
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -27,169 +16,193 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
-import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.nhom9.aroundus.R;
-import com.nhom9.aroundus.adapter.ReviewAdapter;
 import com.nhom9.aroundus.model.Place;
-import com.nhom9.aroundus.model.Review;
+import com.nhom9.aroundus.repository.PlaceRepository;
 
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PlaceDetailActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private ImageView imgPlaceBig, imgPlaceSmall1, imgPlaceSmall2;
+    private ImageView imgPlaceBig;
+    private ImageView imgPlaceSmall1;
+    private ImageView imgPlaceSmall2;
     private ImageButton btnBack;
-    private TextView tvPlaceName, tvRatingValue, tvAddress, tvHoursStatus, tvDescription;
-    private MaterialButton btnDirectionsBottom, btnWriteReview, btnSave;
+    private TextView tvPlaceName;
+    private TextView tvRatingValue;
+    private TextView tvAddress;
+    private TextView tvHoursStatus;
+    private TextView tvDescription;
+    private MaterialButton btnSaveFavorite;
+    private MapView mapViewLocation;
 
-    private MapView mapView;
-    private GoogleMap googleMap;
-
-    private RecyclerView rvReviews;
-    private ReviewAdapter reviewAdapter;
-    private List<Review> reviewList;
-
-    private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
+    private GoogleMap googleMapInstance;
     private Place currentPlace;
-    private boolean isFavorite = false; // Trạng thái yêu thích
+
+    // Trạng thái yêu thích hiện tại, được đồng bộ từ Firestore khi màn hình mở
+    private boolean isFavoriteSelected = false;
+
+    private final PlaceRepository placeRepository = new PlaceRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_place_detail);
 
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
+        anhXaView();
 
-        initViews();
+        mapViewLocation.onCreate(savedInstanceState);
+        mapViewLocation.getMapAsync(this);
 
-        // Khởi tạo bản đồ
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(this);
-
-        btnBack.setOnClickListener(v -> onBackPressed());
-
-        currentPlace = (Place) getIntent().getSerializableExtra("SELECTED_PLACE");
-
-        if (currentPlace != null) {
-            displayPlaceInfo();
-            setupRecyclerView();
-            loadReviewsFromFirestore();
-        } else {
-            Toast.makeText(this, "Không tìm thấy dữ liệu địa điểm!", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        // Nhận dữ liệu địa điểm từ màn hình trước gửi sang
+        if (getIntent() != null && getIntent().hasExtra("SELECTED_PLACE")) {
+            currentPlace = (Place) getIntent().getSerializableExtra("SELECTED_PLACE");
+            hienThiThongTinDiaDiem();
+            // Sau khi có placeId, kiểm tra xem địa điểm này đã được yêu thích chưa
+            kiemTraTrangThaiYeuThich();
         }
 
-        btnDirectionsBottom.setOnClickListener(v -> openGoogleMapsByQuery());
-        btnWriteReview.setOnClickListener(v -> showWriteReviewDialog());
+        // Xử lý nút quay lại
+        btnBack.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
 
-        // Logic bấm nút trái tim
-        btnSave.setOnClickListener(v -> {
-            isFavorite = !isFavorite;
-            if (isFavorite) {
-                btnSave.setIconResource(android.R.drawable.ic_media_ff); // Hoặc tạo icon trái tim full màu thay vào đây
-                btnSave.setIconTintResource(android.R.color.holo_red_light);
-                Toast.makeText(this, "Đã thêm vào danh sách yêu thích", Toast.LENGTH_SHORT).show();
-            } else {
-                btnSave.setIconResource(R.drawable.ic_heart_outline);
-                btnSave.setIconTintResource(R.color.black); // Trả về màu gốc
-                Toast.makeText(this, "Đã bỏ yêu thích", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Khi nhấn nút trái tim: toggle yêu thích và đồng bộ lên Firestore
+        btnSaveFavorite.setOnClickListener(v -> xuLyToggleYeuThich());
     }
 
-    private void initViews() {
-        imgPlaceBig = findViewById(R.id.imgPlaceBig);
-        imgPlaceSmall1 = findViewById(R.id.imgPlaceSmall1);
-        imgPlaceSmall2 = findViewById(R.id.imgPlaceSmall2);
-        btnBack = findViewById(R.id.btnBack);
-        tvPlaceName = findViewById(R.id.tvPlaceName);
-        tvRatingValue = findViewById(R.id.tvRatingValue);
-        tvAddress = findViewById(R.id.tvAddress);
-        tvHoursStatus = findViewById(R.id.tvHoursStatus);
-        tvDescription = findViewById(R.id.tvDescription);
-        btnDirectionsBottom = findViewById(R.id.btnDirectionsBottom);
-        btnWriteReview = findViewById(R.id.btnWriteReview);
-        btnSave = findViewById(R.id.btnSave);
-        rvReviews = findViewById(R.id.rvReviews);
-        mapView = findViewById(R.id.mapView);
+    // Ánh xạ toàn bộ view từ layout
+    private void anhXaView() {
+        mapViewLocation   = findViewById(R.id.mapViewLocation);
+        imgPlaceBig       = findViewById(R.id.imgPlaceBig);
+        imgPlaceSmall1    = findViewById(R.id.imgPlaceSmall1);
+        imgPlaceSmall2    = findViewById(R.id.imgPlaceSmall2);
+        btnBack           = findViewById(R.id.btnBack);
+        tvPlaceName       = findViewById(R.id.tvPlaceName);
+        tvRatingValue     = findViewById(R.id.tvRatingValue);
+        tvAddress         = findViewById(R.id.tvAddress);
+        tvHoursStatus     = findViewById(R.id.tvHoursStatus);
+        tvDescription     = findViewById(R.id.tvDescription);
+        btnSaveFavorite   = findViewById(R.id.btnSaveFavorite);
     }
 
-    // --- SETUP BẢN ĐỒ ---
-    @Override
-    public void onMapReady(GoogleMap map) {
-        googleMap = map;
-        // Bật thanh điều khiển Zoom (+ / -) ở góc bản đồ
-        googleMap.getUiSettings().setZoomControlsEnabled(true);
-        googleMap.getUiSettings().setScrollGesturesEnabled(true);
+    // Hiển thị thông tin địa điểm lên các TextView và ImageView
+    private void hienThiThongTinDiaDiem() {
+        if (currentPlace == null) return;
 
-        if (currentPlace != null && currentPlace.getLat() != 0 && currentPlace.getLng() != 0) {
-            LatLng placeLocation = new LatLng(currentPlace.getLat(), currentPlace.getLng());
-            googleMap.addMarker(new MarkerOptions().position(placeLocation).title(currentPlace.getName()));
-            // Zoom lại gần vị trí đó (mức zoom 15 là vừa tầm)
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLocation, 15f));
-        }
-    }
-
-    // Các hàm vòng đời bắt buộc để MapView không bị crash hoặc đen màn hình
-    @Override
-    protected void onResume() { super.onResume(); mapView.onResume(); }
-    @Override
-    protected void onPause() { super.onPause(); mapView.onPause(); }
-    @Override
-    protected void onDestroy() { super.onDestroy(); mapView.onDestroy(); }
-    @Override
-    public void onLowMemory() { super.onLowMemory(); mapView.onLowMemory(); }
-
-    // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN NHƯ CŨ ---
-    private void displayPlaceInfo() {
         tvPlaceName.setText(currentPlace.getName());
-        tvRatingValue.setText(String.format("%.1f", currentPlace.getAvgRating()));
         tvAddress.setText(currentPlace.getAddress());
-        tvDescription.setText(currentPlace.getDescription() != null ? currentPlace.getDescription() : "Địa điểm này chưa có mô tả.");
+        tvRatingValue.setText(String.valueOf(currentPlace.getAvgRating()));
 
+        // Hiển thị giờ mở cửa nếu có đủ 2 trường
         if (currentPlace.getOpeningHour() != null && currentPlace.getClosingHour() != null) {
             tvHoursStatus.setText(currentPlace.getOpeningHour() + " - " + currentPlace.getClosingHour());
         }
 
-        List<String> images = currentPlace.getImageUrls();
-        if (images != null && !images.isEmpty()) {
-            if (images.size() > 0) loadWebImageToImageView(images.get(0), imgPlaceBig);
-            if (images.size() > 1) loadWebImageToImageView(images.get(1), imgPlaceSmall1);
-            if (images.size() > 2) loadWebImageToImageView(images.get(2), imgPlaceSmall2);
+        // Ưu tiên hiển thị mô tả, nếu không có thì hiển thị danh mục
+        if (currentPlace.getDescription() != null && !currentPlace.getDescription().isEmpty()) {
+            tvDescription.setText(currentPlace.getDescription());
+        } else if (currentPlace.getCategory() != null) {
+            tvDescription.setText("Thể loại: " + currentPlace.getCategory());
+        }
+
+        // Tải ảnh từ Cloudinary qua Glide, lần lượt ảnh lớn rồi 2 ảnh nhỏ
+        List<String> urls = currentPlace.getImageUrls();
+        if (urls != null && !urls.isEmpty()) {
+            Glide.with(this).load(urls.get(0)).centerCrop().into(imgPlaceBig);
+            if (urls.size() > 1) Glide.with(this).load(urls.get(1)).centerCrop().into(imgPlaceSmall1);
+            if (urls.size() > 2) Glide.with(this).load(urls.get(2)).centerCrop().into(imgPlaceSmall2);
         }
     }
 
-    private void loadWebImageToImageView(String urlString, ImageView imageView) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-        executor.execute(() -> {
-            try {
-                InputStream in = new URL(urlString).openStream();
-                Bitmap bitmap = BitmapFactory.decodeStream(in);
-                handler.post(() -> imageView.setImageBitmap(bitmap));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    // Hỏi Firestore xem placeId này có trong favoriteIds của user chưa
+    // Rồi cập nhật icon trái tim tương ứng
+    private void kiemTraTrangThaiYeuThich() {
+        if (currentPlace == null || currentPlace.getPlaceId() == null) return;
+        placeRepository.isFavorite(currentPlace.getPlaceId(), isFav -> {
+            isFavoriteSelected = isFav;
+            capNhatIconTraiTim();
         });
     }
 
-    private void setupRecyclerView() {  }
-    private void loadReviewsFromFirestore() {  }
-    private void openGoogleMapsByQuery() {  }
-    private void showWriteReviewDialog() { }
-    private void updatePlaceRatingOnFirestore(int newRating) {  }
+    // Đổi icon và gọi Firestore thêm/xóa tùy theo trạng thái hiện tại
+    private void xuLyToggleYeuThich() {
+        if (currentPlace == null || currentPlace.getPlaceId() == null) {
+            Toast.makeText(this, "Không thể lưu địa điểm này", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!isFavoriteSelected) {
+            // Chưa yêu thích → thêm vào Firestore
+            placeRepository.addFavorite(currentPlace.getPlaceId(), new PlaceRepository.ActionCallback() {
+                @Override
+                public void onSuccess() {
+                    isFavoriteSelected = true;
+                    capNhatIconTraiTim();
+                    Toast.makeText(PlaceDetailActivity.this, "Đã thêm vào yêu thích", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(String errorMsg) {
+                    Toast.makeText(PlaceDetailActivity.this, "Lỗi: " + errorMsg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            // Đã yêu thích → xóa khỏi Firestore
+            placeRepository.removeFavorite(currentPlace.getPlaceId(), new PlaceRepository.ActionCallback() {
+                @Override
+                public void onSuccess() {
+                    isFavoriteSelected = false;
+                    capNhatIconTraiTim();
+                    Toast.makeText(PlaceDetailActivity.this, "Đã bỏ khỏi yêu thích", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(String errorMsg) {
+                    Toast.makeText(PlaceDetailActivity.this, "Lỗi: " + errorMsg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    // Cập nhật icon và text nút trái tim dựa theo trạng thái isFavoriteSelected
+    private void capNhatIconTraiTim() {
+        if (isFavoriteSelected) {
+            // Trái tim đặc = đã yêu thích
+            btnSaveFavorite.setIconResource(R.drawable.ic_heart_filled);
+            btnSaveFavorite.setText("Đã lưu");
+        } else {
+            // Trái tim rỗng = chưa yêu thích
+            btnSaveFavorite.setIconResource(R.drawable.ic_heart_outline);
+            btnSaveFavorite.setText("Lưu vào danh sách");
+        }
+    }
+
+    // Cấu hình bản đồ sau khi GoogleMap đã sẵn sàng
+    @Override
+    public void onMapReady(GoogleMap map) {
+        googleMapInstance = map;
+        googleMapInstance.getUiSettings().setZoomControlsEnabled(true);
+        googleMapInstance.getUiSettings().setZoomGesturesEnabled(true);
+        googleMapInstance.getUiSettings().setScrollGesturesEnabled(true);
+
+        if (currentPlace != null) {
+            // Dùng đúng lat/lng từ model thay vì tọa độ cứng
+            LatLng viTriDiaDiem = new LatLng(currentPlace.getLat(), currentPlace.getLng());
+            googleMapInstance.addMarker(new MarkerOptions()
+                    .position(viTriDiaDiem)
+                    .title(currentPlace.getName()));
+            googleMapInstance.moveCamera(CameraUpdateFactory.newLatLngZoom(viTriDiaDiem, 15f));
+        }
+    }
+
+    @Override
+    protected void onResume() { super.onResume(); mapViewLocation.onResume(); }
+
+    @Override
+    protected void onPause() { super.onPause(); mapViewLocation.onPause(); }
+
+    @Override
+    protected void onDestroy() { super.onDestroy(); mapViewLocation.onDestroy(); }
+
+    @Override
+    public void onLowMemory() { super.onLowMemory(); mapViewLocation.onLowMemory(); }
 }

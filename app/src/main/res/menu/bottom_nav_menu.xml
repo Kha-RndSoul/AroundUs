@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Tab Khám phá — hiển thị danh sách địa điểm -->
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@android:drawable/ic_menu_compass"
+        android:title="Khám phá" />
+
+    <!-- Tab Lịch trình — chưa implement -->
+    <item
+        android:id="@+id/nav_schedule"
+        android:icon="@android:drawable/ic_menu_today"
+        android:title="Lịch trình" />
+
+    <!-- Tab Yêu thích — hiển thị địa điểm đã lưu -->
+    <item
+        android:id="@+id/nav_favorites"
+        android:icon="@drawable/ic_heart_outline"
+        android:title="Yêu thích" />
+
+    <!-- Tab Đóng góp — chưa implement -->
+    <item
+        android:id="@+id/nav_contribute"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Đóng góp" />
+
+    <!-- Tab Tài khoản — chưa implement -->
+    <item
+        android:id="@+id/nav_account"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Tài khoản" />
+
+</menu>

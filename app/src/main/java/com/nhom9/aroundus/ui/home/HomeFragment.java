@@ -70,6 +70,7 @@ public class HomeFragment extends Fragment {
         allPlaces.clear();
 
         Place p1 = new Place();
+        p1.setPlaceId("place_001");
         p1.setName("Cơm tấm sinh viên");
         p1.setAddress("Gần Đại học Nông Lâm");
         p1.setCategory("Quán ăn");
@@ -77,6 +78,7 @@ public class HomeFragment extends Fragment {
         allPlaces.add(p1);
 
         Place p2 = new Place();
+        p2.setPlaceId("place_002");
         p2.setName("Vincom Thủ Đức");
         p2.setAddress("TP. Thủ Đức");
         p2.setCategory("Mua sắm");
@@ -84,6 +86,7 @@ public class HomeFragment extends Fragment {
         allPlaces.add(p2);
 
         Place p3 = new Place();
+        p2.setPlaceId("place_003");
         p3.setName("Khu vui chơi Suối Tiên");
         p3.setAddress("Xa lộ Hà Nội");
         p3.setCategory("Khu vui chơi");
@@ -91,6 +94,7 @@ public class HomeFragment extends Fragment {
         allPlaces.add(p3);
 
         Place p4 = new Place();
+        p2.setPlaceId("place_004");
         p4.setName("Highlands Coffee");
         p4.setAddress("Khu vực Thủ Đức");
         p4.setCategory("Cà phê");
@@ -163,5 +167,13 @@ public class HomeFragment extends Fragment {
         }
 
         placeAdapter.setPlaceList(filteredList);
+    }
+    // Refresh lại trạng thái tim trên các card mỗi khi quay về trang chủ
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (placeAdapter != null) {
+            placeAdapter.notifyDataSetChanged();
+        }
     }
 }
