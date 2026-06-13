@@ -27,6 +27,10 @@ import com.nhom9.aroundus.R;
 import com.nhom9.aroundus.model.Place;
 import com.nhom9.aroundus.repository.PlaceRepository;
 
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.AbsoluteSizeSpan;
+
 public class AddPlaceActivity extends AppCompatActivity {
 
     private EditText edtPlaceName, edtPlaceCategory, edtPlaceDescription;
@@ -80,6 +84,22 @@ public class AddPlaceActivity extends AppCompatActivity {
         btnSelectImage = findViewById(R.id.btnSelectImage);
         btnSavePlace = findViewById(R.id.btnSavePlace);
         progressBar = findViewById(R.id.progressBar);
+
+        // TẠO HINT SIZE NHỎ
+        // Cho ô Tên địa điểm
+        SpannableString hintName = new SpannableString("Tên địa điểm (Ví dụ: Quán phở A, Cà phê B)");
+        hintName.setSpan(new AbsoluteSizeSpan(14, true), 0, hintName.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        edtPlaceName.setHint(hintName);
+
+        // Cho ô Danh mục
+        SpannableString hintCategory = new SpannableString("Danh mục (Ví dụ: Quán ăn, Mua sắm, Giải trí)");
+        hintCategory.setSpan(new AbsoluteSizeSpan(14, true), 0, hintCategory.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        edtPlaceCategory.setHint(hintCategory);
+
+        // Cho ô Mô tả
+        SpannableString hintDesc = new SpannableString("Mô tả chi tiết về địa điểm này có gì thú vị...");
+        hintDesc.setSpan(new AbsoluteSizeSpan(14, true), 0, hintDesc.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        edtPlaceDescription.setHint(hintDesc);
     }
 
     private void setupListeners() {
@@ -163,30 +183,29 @@ public class AddPlaceActivity extends AppCompatActivity {
         String category = edtPlaceCategory.getText().toString().trim();
         String description = edtPlaceDescription.getText().toString().trim();
 
-        // 1. Khởi tạo object Place bằng constructor rỗng
+        // Khởi tạo object Place bằng constructor rỗng
         Place newPlace = new Place();
 
-        // 2. Dùng các hàm Setter để gán dữ liệu
+        // Dùng các hàm Setter để gán dữ liệu
         newPlace.setName(name);
         newPlace.setCategory(category);
         newPlace.setDescription(description);
 
-        // Do model của bạn lưu danh sách ảnh (List<String>), nên ta cần tạo một List và add ảnh vừa upload vào
+        // List và add ảnh vừa upload
         List<String> images = new ArrayList<>();
         images.add(imageUrl);
         newPlace.setImageUrls(images);
 
-        // (Tùy chọn) Gán thêm các dữ liệu mặc định khác nếu nhóm bạn yêu cầu
+        //Gán thêm các dữ liệu mặc định khác
         newPlace.setAvgRating(0.0);
 
         // 3. Gọi Repository để lưu lên Firebase
         placeRepository.addPlace(newPlace, task -> {
             if (task.isSuccessful()) {
-                // Sử dụng setPlaceId theo đúng tên hàm trong model của bạn
                 String documentId = task.getResult().getId();
                 newPlace.setPlaceId(documentId);
 
-                // Optional: Nếu bạn muốn cập nhật lại chính document đó trên Firestore để lưu placeId vào trong field
+                // Optional: Nếu muốn cập nhật lại chính document đó trên Firestore để lưu placeId vào trong field
                 // placeRepository.updatePlaceId(documentId);
 
                 Toast.makeText(AddPlaceActivity.this, "Đăng địa điểm thành công!", Toast.LENGTH_LONG).show();
