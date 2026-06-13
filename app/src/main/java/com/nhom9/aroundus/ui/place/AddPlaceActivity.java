@@ -13,7 +13,10 @@ import android.view.View;
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -21,6 +24,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.nhom9.aroundus.R;
+import com.nhom9.aroundus.model.Place;
+import com.nhom9.aroundus.repository.PlaceRepository;
 
 public class AddPlaceActivity extends AppCompatActivity {
 
@@ -28,6 +33,7 @@ public class AddPlaceActivity extends AppCompatActivity {
     private ImageView imgPlacePreview;
     private Button btnSelectImage, btnSavePlace;
     private ProgressBar progressBar;
+    private PlaceRepository placeRepository;
 
     // Biến lưu trữ đường dẫn URI của ảnh sau khi chọn
     private Uri selectedImageUri = null;
@@ -48,6 +54,8 @@ public class AddPlaceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_place); // Liên kết với file XML giao diện
+
+        placeRepository = new PlaceRepository();
 
         initViews();
         setupListeners();
@@ -127,7 +135,8 @@ public class AddPlaceActivity extends AppCompatActivity {
                     Toast.makeText(AddPlaceActivity.this, "Tải ảnh thành công!", Toast.LENGTH_SHORT).show();
                     btnSavePlace.setText("ĐANG LƯU DỮ LIỆU...");
 
-                    // savePlaceToFirestore(imageUrl);
+                    // Lưu lên FireStore
+                    savePlaceToFirestore(imageUrl);
                 });
             }
 
@@ -147,5 +156,47 @@ public class AddPlaceActivity extends AppCompatActivity {
                 // Xử lý khi tác vụ bị hoãn và lên lịch lại
             }
         }).dispatch();
+    }
+
+    private void savePlaceToFirestore(String imageUrl) {
+        String name = edtPlaceName.getText().toString().trim();
+        String category = edtPlaceCategory.getText().toString().trim();
+        String description = edtPlaceDescription.getText().toString().trim();
+
+        // 1. Khởi tạo object Place bằng constructor rỗng
+        Place newPlace = new Place();
+
+        // 2. Dùng các hàm Setter để gán dữ liệu
+        newPlace.setName(name);
+        newPlace.setCategory(category);
+        newPlace.setDescription(description);
+
+        // Do model của bạn lưu danh sách ảnh (List<String>), nên ta cần tạo một List và add ảnh vừa upload vào
+        List<String> images = new ArrayList<>();
+        images.add(imageUrl);
+        newPlace.setImageUrls(images);
+
+        // (Tùy chọn) Gán thêm các dữ liệu mặc định khác nếu nhóm bạn yêu cầu
+        newPlace.setAvgRating(0.0);
+
+        // 3. Gọi Repository để lưu lên Firebase
+        placeRepository.addPlace(newPlace, task -> {
+            if (task.isSuccessful()) {
+                // Sử dụng setPlaceId theo đúng tên hàm trong model của bạn
+                String documentId = task.getResult().getId();
+                newPlace.setPlaceId(documentId);
+
+                // Optional: Nếu bạn muốn cập nhật lại chính document đó trên Firestore để lưu placeId vào trong field
+                // placeRepository.updatePlaceId(documentId);
+
+                Toast.makeText(AddPlaceActivity.this, "Đăng địa điểm thành công!", Toast.LENGTH_LONG).show();
+                finish();
+            } else {
+                progressBar.setVisibility(View.GONE);
+                btnSavePlace.setEnabled(true);
+                btnSavePlace.setText("ĐĂNG ĐỊA ĐIỂM");
+                Toast.makeText(AddPlaceActivity.this, "Lỗi khi lưu dữ liệu: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

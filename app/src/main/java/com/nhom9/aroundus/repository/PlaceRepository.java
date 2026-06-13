@@ -5,6 +5,8 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.nhom9.aroundus.model.Place;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.firebase.firestore.DocumentReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,6 +112,17 @@ public class PlaceRepository {
                             .addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
                 })
                 .addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
+    }
+
+    public void addPlace(Place place, OnCompleteListener<DocumentReference> listener) {
+        String uid = getCurrentUid();
+        if (uid != null) {
+            place.setCreatedBy(uid);
+        }
+
+        db.collection("places")
+                .add(place)
+                .addOnCompleteListener(listener);
     }
 
     // Lọc fake data theo danh sách favIds
