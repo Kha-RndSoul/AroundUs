@@ -9,6 +9,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.view.View;
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
+import java.util.HashMap;
+import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -26,7 +32,7 @@ public class AddPlaceActivity extends AppCompatActivity {
     // Biến lưu trữ đường dẫn URI của ảnh sau khi chọn
     private Uri selectedImageUri = null;
 
-    // Cách mới của Android để xử lý kết quả trả về từ Intent (thay thế cho onActivityResult)
+    // Xử lý kết quả trả về từ Intent
     private final ActivityResultLauncher<Intent> pickImageLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -45,6 +51,17 @@ public class AddPlaceActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
+
+        // Khởi tạo Cloudinary
+        try {
+            Map<String, String> config = new HashMap<>();
+            config.put("cloud_name", "dfbijq8ur");
+            config.put("api_key", "418197113655413");
+            config.put("api_secret", "t871XwlMIj_N066Z-UbDvoQxfYI");
+            MediaManager.init(this, config);
+        } catch (Exception e) {
+            // MediaManager đã được khởi tạo, bỏ qua
+        }
     }
 
     private void initViews() {
@@ -64,13 +81,71 @@ public class AddPlaceActivity extends AppCompatActivity {
             pickImageLauncher.launch(intent);
         });
 
-        // Sự kiện bấm nút Lưu (Tạm thời test việc chọn ảnh trước khi code Cloudinary)
+        // Sự kiện bấm nút Lưu
         btnSavePlace.setOnClickListener(v -> {
+            // Validate: Bắt buộc phải chọn ảnh
             if (selectedImageUri == null) {
-                Toast.makeText(this, "Vui lòng chọn ảnh trước!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Đã chọn ảnh thành công! Chuẩn bị upload.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng chọn ảnh trước khi đăng!", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Validate: Bắt buộc phải nhập tên địa điểm
+            if (edtPlaceName.getText().toString().trim().isEmpty()) {
+                edtPlaceName.setError("Không được để trống tên địa điểm");
+                return;
+            }
+
+            // Tiến hành upload ảnh trước
+            uploadImageToCloudinary(selectedImageUri);
         });
+    }
+
+    private void uploadImageToCloudinary(Uri imageUri) {
+        // Hiện vòng xoay Loading và khóa nút bấm
+        progressBar.setVisibility(View.VISIBLE);
+        btnSavePlace.setEnabled(false);
+        btnSavePlace.setText("Đang tải ảnh lên...");
+
+        MediaManager.get().upload(imageUri).callback(new UploadCallback() {
+            @Override
+            public void onStart(String requestId) {
+                // Quá trình upload bắt đầu
+            }
+
+            @Override
+            public void onProgress(String requestId, long bytes, long totalBytes) {
+            }
+
+            @Override
+            public void onSuccess(String requestId, Map resultData) {
+                // Lấy URL an toàn (https) do Cloudinary trả về
+                String imageUrl = (String) resultData.get("secure_url");
+
+                // Đảm bảo cập nhật UI trên Main Thread
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(AddPlaceActivity.this, "Tải ảnh thành công!", Toast.LENGTH_SHORT).show();
+                    btnSavePlace.setText("ĐANG LƯU DỮ LIỆU...");
+
+                    // savePlaceToFirestore(imageUrl);
+                });
+            }
+
+            @Override
+            public void onError(String requestId, ErrorInfo error) {
+                // Xử lý Edge Case: Lỗi mạng hoặc lỗi file
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    btnSavePlace.setEnabled(true);
+                    btnSavePlace.setText("ĐĂNG ĐỊA ĐIỂM");
+                    Toast.makeText(AddPlaceActivity.this, "Lỗi tải ảnh: " + error.getDescription(), Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onReschedule(String requestId, ErrorInfo error) {
+                // Xử lý khi tác vụ bị hoãn và lên lịch lại
+            }
+        }).dispatch();
     }
 }
