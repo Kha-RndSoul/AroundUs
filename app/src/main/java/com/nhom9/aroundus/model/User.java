@@ -7,7 +7,7 @@ public class User {
     private String userId;
     private String displayName;
     private String email;
-    // Danh sách placeId mà người dùng đã lưu vào yêu thích
+    private String avatarUrl; // mới
     private List<String> favoriteIds;
 
     public User() {}
@@ -27,6 +27,8 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 
     public List<String> getFavoriteIds() {
         if (favoriteIds == null) favoriteIds = new ArrayList<>();
