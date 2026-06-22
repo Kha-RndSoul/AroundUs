@@ -14,6 +14,7 @@ import com.cloudinary.android.MediaManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.nhom9.aroundus.ui.favorites.FavoritesFragment;
 import com.nhom9.aroundus.ui.home.HomeFragment;
+import com.nhom9.aroundus.ui.profile.ProfileFragment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Khởi tạo Cloudinary
+        // Khởi tạo Cloudinary (không dùng api_secret ở client)
         try {
             Map<String, String> config = new HashMap<>();
             config.put("cloud_name", "dfbijq8ur");
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
             // Tránh crash nếu MediaManager đã init trước đó
         }
 
-        // Hiển thị HomeFragment mặc định khi app khởi động
+        // Mặc định mở Home
         if (savedInstanceState == null) {
             chuyenFragment(new HomeFragment());
         }
@@ -59,9 +60,11 @@ public class MainActivity extends AppCompatActivity {
                 chuyenFragment(new FavoritesFragment());
                 return true;
 
-            } else if (id == R.id.nav_schedule
-                    || id == R.id.nav_contribute
-                    || id == R.id.nav_account) {
+            } else if (id == R.id.nav_account) {
+                chuyenFragment(new ProfileFragment());
+                return true;
+
+            } else if (id == R.id.nav_schedule || id == R.id.nav_contribute) {
                 Toast.makeText(this, "Tính năng đang phát triển", Toast.LENGTH_SHORT).show();
                 return true;
             }
