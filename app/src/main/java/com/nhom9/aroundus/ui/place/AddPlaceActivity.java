@@ -3,24 +3,20 @@ package com.nhom9.aroundus.ui.place;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
-import com.cloudinary.android.MediaManager;
-import com.cloudinary.android.callback.ErrorInfo;
-import com.cloudinary.android.callback.UploadCallback;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.nhom9.aroundus.R;
@@ -34,23 +30,31 @@ import android.text.style.AbsoluteSizeSpan;
 
 public class AddPlaceActivity extends AppCompatActivity {
 
-    private EditText edtPlaceName, edtPlaceCategory, edtPlaceDescription;
-    private ImageView imgPlacePreview;
+    private EditText edtPlaceName, edtPlaceAddress, edtPlaceDescription;
+    private TextView tvPlaceCategory;
+    private ImageView imgPreview1, imgPreview2, imgPreview3;
     private Button btnSelectImage, btnSavePlace;
     private ProgressBar progressBar;
+
     private PlaceRepository placeRepository;
 
-    // Biến lưu trữ đường dẫn URI của ảnh sau khi chọn
-    private Uri selectedImageUri = null;
+    private List<Uri> selectedImageUris = new ArrayList<>();
 
-    // Xử lý kết quả trả về từ Intent
-    private final ActivityResultLauncher<Intent> pickImageLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    selectedImageUri = result.getData().getData();
-                    // Hiển thị ảnh vừa chọn lên ImageView
-                    imgPlacePreview.setImageURI(selectedImageUri);
+    // Đếm số lượng ảnh đã upload thành công
+    private int uploadSuccessCount = 0;
+
+    // Xử lý kết quả trả về khi chọn nhiều hình ảnh
+    private final ActivityResultLauncher<String> pickMultipleImagesLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetMultipleContents(),
+            uris -> {
+                if (uris != null && !uris.isEmpty()) {
+                    if (uris.size() > 3) {
+                        Toast.makeText(this, "Chỉ được chọn tối đa 3 ảnh! Đã lấy 3 ảnh đầu.", Toast.LENGTH_SHORT).show();
+                        selectedImageUris = uris.subList(0, 3);
+                    } else {
+                        selectedImageUris = uris;
+                    }
+                    displaySelectedImages();
                 }
             }
     );
@@ -58,7 +62,7 @@ public class AddPlaceActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_place); // Liên kết với file XML giao diện
+        setContentView(R.layout.activity_add_place);
 
         placeRepository = new PlaceRepository();
 
@@ -68,118 +72,151 @@ public class AddPlaceActivity extends AppCompatActivity {
 
     private void initViews() {
         edtPlaceName = findViewById(R.id.edtPlaceName);
-        edtPlaceCategory = findViewById(R.id.edtPlaceCategory);
+        edtPlaceAddress = findViewById(R.id.edtPlaceAddress);
+        tvPlaceCategory = findViewById(R.id.tvPlaceCategory);
         edtPlaceDescription = findViewById(R.id.edtPlaceDescription);
-        imgPlacePreview = findViewById(R.id.imgPlacePreview);
+
+        imgPreview1 = findViewById(R.id.imgPreview1);
+        imgPreview2 = findViewById(R.id.imgPreview2);
+        imgPreview3 = findViewById(R.id.imgPreview3);
+
         btnSelectImage = findViewById(R.id.btnSelectImage);
         btnSavePlace = findViewById(R.id.btnSavePlace);
         progressBar = findViewById(R.id.progressBar);
 
-        // TẠO HINT SIZE NHỎ
-        // Cho ô Tên địa điểm
         SpannableString hintName = new SpannableString("Tên địa điểm (Ví dụ: Quán phở A, Cà phê B)");
         hintName.setSpan(new AbsoluteSizeSpan(14, true), 0, hintName.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         edtPlaceName.setHint(hintName);
 
-        // Cho ô Danh mục
-        SpannableString hintCategory = new SpannableString("Danh mục (Ví dụ: Quán ăn, Mua sắm, Giải trí)");
-        hintCategory.setSpan(new AbsoluteSizeSpan(14, true), 0, hintCategory.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-        edtPlaceCategory.setHint(hintCategory);
+        SpannableString hintAddress = new SpannableString("Địa chỉ cụ thể...");
+        hintAddress.setSpan(new AbsoluteSizeSpan(14, true), 0, hintAddress.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        edtPlaceAddress.setHint(hintAddress);
 
-        // Cho ô Mô tả
+        SpannableString hintCategory = new SpannableString("Bấm để chọn danh mục");
+        hintCategory.setSpan(new AbsoluteSizeSpan(14, true), 0, hintCategory.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        tvPlaceCategory.setHint(hintCategory);
+
         SpannableString hintDesc = new SpannableString("Mô tả chi tiết về địa điểm này có gì thú vị...");
         hintDesc.setSpan(new AbsoluteSizeSpan(14, true), 0, hintDesc.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         edtPlaceDescription.setHint(hintDesc);
     }
 
+    private void displaySelectedImages() {
+        imgPreview1.setVisibility(View.GONE);
+        imgPreview2.setVisibility(View.GONE);
+        imgPreview3.setVisibility(View.GONE);
+
+        if (selectedImageUris.size() > 0) {
+            imgPreview1.setVisibility(View.VISIBLE);
+            imgPreview1.setImageURI(selectedImageUris.get(0));
+        }
+        if (selectedImageUris.size() > 1) {
+            imgPreview2.setVisibility(View.VISIBLE);
+            imgPreview2.setImageURI(selectedImageUris.get(1));
+        }
+        if (selectedImageUris.size() > 2) {
+            imgPreview3.setVisibility(View.VISIBLE);
+            imgPreview3.setImageURI(selectedImageUris.get(2));
+        }
+    }
+
     private void setupListeners() {
-        // Sự kiện bấm nút Chọn ảnh
-        btnSelectImage.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            pickImageLauncher.launch(intent);
+        tvPlaceCategory.setOnClickListener(v -> {
+            String[] categories = {"Quán ăn", "Cà phê", "Mua sắm", "Khu vui chơi"};
+            new AlertDialog.Builder(this)
+                    .setTitle("Chọn danh mục")
+                    .setItems(categories, (dialog, which) -> {
+                        tvPlaceCategory.setText(categories[which]);
+                    })
+                    .show();
         });
 
-        // Sự kiện bấm nút Lưu
+        // Gọi laucher lấy nhiều ảnh
+        btnSelectImage.setOnClickListener(v -> {
+            pickMultipleImagesLauncher.launch("image/*");
+        });
+
         btnSavePlace.setOnClickListener(v -> {
-            // Validate: Bắt buộc phải chọn ảnh
-            if (selectedImageUri == null) {
-                Toast.makeText(this, "Vui lòng chọn ảnh trước khi đăng!", Toast.LENGTH_SHORT).show();
+            if (selectedImageUris.isEmpty()) {
+                Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh (tối đa 3)!", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            // Validate: Bắt buộc phải nhập tên địa điểm
             if (edtPlaceName.getText().toString().trim().isEmpty()) {
-                edtPlaceName.setError("Không được để trống tên địa điểm");
+                edtPlaceName.setError("Trống");
+                return;
+            }
+            if (edtPlaceAddress.getText().toString().trim().isEmpty()) {
+                edtPlaceAddress.setError("Trống");
+                return;
+            }
+            if (tvPlaceCategory.getText().toString().trim().isEmpty()) {
+                Toast.makeText(this, "Vui lòng chọn danh mục!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Tiến hành upload ảnh trước
-            uploadImageToCloudinary(selectedImageUri);
+            uploadImagesToCloudinary();
         });
     }
 
-    private void uploadImageToCloudinary(Uri imageUri) {
-        // Hiện vòng xoay Loading và khóa nút bấm
+    // Duyệt mảng URI và đẩy lên Cloudinary
+    private void uploadImagesToCloudinary() {
         progressBar.setVisibility(View.VISIBLE);
         btnSavePlace.setEnabled(false);
-        btnSavePlace.setText("Đang tải ảnh lên...");
+        btnSavePlace.setText("Đang tải ảnh lên (0/" + selectedImageUris.size() + ")...");
 
-        ImageUtils.uploadImage(this, imageUri, new ImageUtils.UploadListener() {
-            @Override
-            public void onSuccess(String imageUrl) {
-                // Đảm bảo thao tác UI nằm trên Main Thread
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(AddPlaceActivity.this, "Tải ảnh thành công!", Toast.LENGTH_SHORT).show();
-                    btnSavePlace.setText("ĐANG LƯU DỮ LIỆU...");
+        List<String> uploadedUrls = new ArrayList<>();
+        uploadSuccessCount = 0;
 
-                    // lưu dữ liệu Firestore
-                    savePlaceToFirestore(imageUrl);
-                });
-            }
+        for (Uri uri : selectedImageUris) {
+            ImageUtils.uploadImage(this, uri, new ImageUtils.UploadListener() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    runOnUiThread(() -> {
+                        uploadSuccessCount++;
+                        uploadedUrls.add(imageUrl);
+                        btnSavePlace.setText("Đang tải ảnh lên (" + uploadSuccessCount + "/" + selectedImageUris.size() + ")...");
 
-            @Override
-            public void onError(String error) {
-                // Xử lý khi có lỗi mạng hoặc lỗi cấu hình
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    btnSavePlace.setEnabled(true);
-                    btnSavePlace.setText("ĐĂNG ĐỊA ĐIỂM");
-                    Toast.makeText(AddPlaceActivity.this, "Lỗi tải ảnh: " + error, Toast.LENGTH_LONG).show();
-                });
-            }
-        });
+                        if (uploadSuccessCount == selectedImageUris.size()) {
+                            btnSavePlace.setText("ĐANG LƯU DỮ LIỆU...");
+                            savePlaceToFirestore(uploadedUrls);
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        // Nếu đang hiện Loading thì tắt đi và báo lỗi
+                        if (progressBar.getVisibility() == View.VISIBLE) {
+                            progressBar.setVisibility(View.GONE);
+                            btnSavePlace.setEnabled(true);
+                            btnSavePlace.setText("ĐĂNG ĐỊA ĐIỂM");
+                            Toast.makeText(AddPlaceActivity.this, "Lỗi tải ảnh: " + error, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+        }
     }
 
-    private void savePlaceToFirestore(String imageUrl) {
+    private void savePlaceToFirestore(List<String> imageUrls) {
         String name = edtPlaceName.getText().toString().trim();
-        String category = edtPlaceCategory.getText().toString().trim();
+        String address = edtPlaceAddress.getText().toString().trim();
+        String category = tvPlaceCategory.getText().toString().trim();
         String description = edtPlaceDescription.getText().toString().trim();
 
-        // Khởi tạo object Place bằng constructor rỗng
         Place newPlace = new Place();
-
-        // Dùng các hàm Setter để gán dữ liệu
         newPlace.setName(name);
+        newPlace.setAddress(address);
         newPlace.setCategory(category);
         newPlace.setDescription(description);
-
-        // List và add ảnh vừa upload
-        List<String> images = new ArrayList<>();
-        images.add(imageUrl);
-        newPlace.setImageUrls(images);
-
-        //Gán thêm các dữ liệu mặc định khác
+        newPlace.setImageUrls(imageUrls);
         newPlace.setAvgRating(0.0);
 
-        // 3. Gọi Repository để lưu lên Firebase
         placeRepository.addPlace(newPlace, task -> {
             if (task.isSuccessful()) {
                 String documentId = task.getResult().getId();
                 newPlace.setPlaceId(documentId);
-
-                // Optional: Nếu muốn cập nhật lại chính document đó trên Firestore để lưu placeId vào trong field
-                // placeRepository.updatePlaceId(documentId);
 
                 Toast.makeText(AddPlaceActivity.this, "Đăng địa điểm thành công!", Toast.LENGTH_LONG).show();
                 finish();
@@ -187,7 +224,7 @@ public class AddPlaceActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 btnSavePlace.setEnabled(true);
                 btnSavePlace.setText("ĐĂNG ĐỊA ĐIỂM");
-                Toast.makeText(AddPlaceActivity.this, "Lỗi khi lưu dữ liệu: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(AddPlaceActivity.this, "Lỗi lưu dữ liệu: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
