@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -21,6 +22,9 @@ import com.nhom9.aroundus.R;
 import com.nhom9.aroundus.adapter.PlaceAdapter;
 import com.nhom9.aroundus.model.Place;
 import com.nhom9.aroundus.repository.PlaceRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +41,9 @@ public class HomeFragment extends Fragment {
 
     private final List<Place> allPlaces = new ArrayList<>();
     private String currentCategory = "Tất cả";
+    private TextView tvAvatar;
+    private TextView tvUserName;
+    private TextView tvGreeting;
 
     public HomeFragment() {
         // Constructor rỗng bắt buộc cho Fragment
@@ -54,6 +61,11 @@ public class HomeFragment extends Fragment {
         rvPlaces = view.findViewById(R.id.rvPlaces);
         edtSearch = view.findViewById(R.id.edtSearch);
         btnFilter = view.findViewById(R.id.btnFilter);
+        tvAvatar = view.findViewById(R.id.tvAvatar);
+        tvUserName = view.findViewById(R.id.tvUserName);
+        tvGreeting = view.findViewById(R.id.tvGreeting);
+
+        loadCurrentUserInfo();
 
         rvPlaces.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
@@ -160,6 +172,81 @@ public class HomeFragment extends Fragment {
         }
 
         placeAdapter.setPlaceList(filteredList);
+    }
+    private void loadCurrentUserInfo() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (currentUser == null) {
+            updateHeaderUser("Khách");
+            return;
+        }
+
+        String uid = currentUser.getUid();
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    String displayName = null;
+
+                    if (snapshot.exists()) {
+                        displayName = snapshot.getString("displayName");
+
+                        // Dự phòng nếu nhóm lỡ lưu field tên bằng tên khác
+                        if (isBlank(displayName)) {
+                            displayName = snapshot.getString("name");
+                        }
+
+                        if (isBlank(displayName)) {
+                            displayName = snapshot.getString("username");
+                        }
+                    }
+
+                    // Dự phòng lấy từ FirebaseAuth
+                    if (isBlank(displayName)) {
+                        displayName = currentUser.getDisplayName();
+                    }
+
+                    // Dự phòng cuối: lấy phần trước @ trong email
+                    if (isBlank(displayName) && currentUser.getEmail() != null) {
+                        displayName = currentUser.getEmail().split("@")[0];
+                    }
+
+                    if (isBlank(displayName)) {
+                        displayName = "Người dùng";
+                    }
+
+                    updateHeaderUser(displayName);
+                })
+                .addOnFailureListener(e -> {
+                    String fallbackName = currentUser.getDisplayName();
+
+                    if (isBlank(fallbackName) && currentUser.getEmail() != null) {
+                        fallbackName = currentUser.getEmail().split("@")[0];
+                    }
+
+                    if (isBlank(fallbackName)) {
+                        fallbackName = "Người dùng";
+                    }
+
+                    updateHeaderUser(fallbackName);
+                });
+    }
+
+    private void updateHeaderUser(String displayName) {
+        tvUserName.setText("Xin chào, " + displayName);
+        tvGreeting.setText("Hôm nay bạn muốn khám phá nơi nào?");
+
+        if (!isBlank(displayName)) {
+            tvAvatar.setText(displayName.substring(0, 1).toUpperCase());
+        } else {
+            tvAvatar.setText("U");
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     private String safeLower(String value) {
