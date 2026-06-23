@@ -26,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.nhom9.aroundus.R;
 import com.nhom9.aroundus.model.Place;
 import com.nhom9.aroundus.repository.PlaceRepository;
+import com.nhom9.aroundus.utils.ImageUtils;
 
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -63,17 +64,6 @@ public class AddPlaceActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
-
-        // Khởi tạo Cloudinary
-        try {
-            Map<String, String> config = new HashMap<>();
-            config.put("cloud_name", "dfbijq8ur");
-            config.put("api_key", "418197113655413");
-            config.put("api_secret", "t871XwlMIj_N066Z-UbDvoQxfYI");
-            MediaManager.init(this, config);
-        } catch (Exception e) {
-            // MediaManager đã được khởi tạo, bỏ qua
-        }
     }
 
     private void initViews() {
@@ -134,48 +124,31 @@ public class AddPlaceActivity extends AppCompatActivity {
         btnSavePlace.setEnabled(false);
         btnSavePlace.setText("Đang tải ảnh lên...");
 
-        MediaManager.get().upload(imageUri).callback(new UploadCallback() {
+        ImageUtils.uploadImage(this, imageUri, new ImageUtils.UploadListener() {
             @Override
-            public void onStart(String requestId) {
-                // Quá trình upload bắt đầu
-            }
-
-            @Override
-            public void onProgress(String requestId, long bytes, long totalBytes) {
-            }
-
-            @Override
-            public void onSuccess(String requestId, Map resultData) {
-                // Lấy URL an toàn (https) do Cloudinary trả về
-                String imageUrl = (String) resultData.get("secure_url");
-
-                // Đảm bảo cập nhật UI trên Main Thread
+            public void onSuccess(String imageUrl) {
+                // Đảm bảo thao tác UI nằm trên Main Thread
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(AddPlaceActivity.this, "Tải ảnh thành công!", Toast.LENGTH_SHORT).show();
                     btnSavePlace.setText("ĐANG LƯU DỮ LIỆU...");
 
-                    // Lưu lên FireStore
+                    // lưu dữ liệu Firestore
                     savePlaceToFirestore(imageUrl);
                 });
             }
 
             @Override
-            public void onError(String requestId, ErrorInfo error) {
-                // Xử lý Edge Case: Lỗi mạng hoặc lỗi file
+            public void onError(String error) {
+                // Xử lý khi có lỗi mạng hoặc lỗi cấu hình
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     btnSavePlace.setEnabled(true);
                     btnSavePlace.setText("ĐĂNG ĐỊA ĐIỂM");
-                    Toast.makeText(AddPlaceActivity.this, "Lỗi tải ảnh: " + error.getDescription(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(AddPlaceActivity.this, "Lỗi tải ảnh: " + error, Toast.LENGTH_LONG).show();
                 });
             }
-
-            @Override
-            public void onReschedule(String requestId, ErrorInfo error) {
-                // Xử lý khi tác vụ bị hoãn và lên lịch lại
-            }
-        }).dispatch();
+        });
     }
 
     private void savePlaceToFirestore(String imageUrl) {
