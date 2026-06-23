@@ -64,7 +64,12 @@ public class MainActivity extends AppCompatActivity {
                 chuyenFragment(new ProfileFragment());
                 return true;
 
-            } else if (id == R.id.nav_schedule || id == R.id.nav_contribute) {
+            } else if (id == R.id.nav_contribute) {
+                android.content.Intent intent = new android.content.Intent(MainActivity.this, com.nhom9.aroundus.ui.place.AddPlaceActivity.class);
+                startActivity(intent);
+                return true;
+
+            } else if (id == R.id.nav_schedule) {
                 Toast.makeText(this, "Tính năng đang phát triển", Toast.LENGTH_SHORT).show();
                 return true;
             }
