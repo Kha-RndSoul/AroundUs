@@ -124,6 +124,37 @@ public class PlaceRepository {
                 .add(place)
                 .addOnCompleteListener(listener);
     }
+    public void getAllPlaces(PlaceListCallback callback) {
+        db.collection("places")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Place> places = new ArrayList<>();
+
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Place place = doc.toObject(Place.class);
+
+                        if (place != null) {
+                            if (place.getPlaceId() == null || place.getPlaceId().isEmpty()) {
+                                place.setPlaceId(doc.getId());
+                            }
+
+                            places.add(place);
+                        }
+                    }
+
+                    // Tạm thời fallback về fake data nếu Firestore chưa có dữ liệu
+                    // Sau khi nhóm đã nhập dữ liệu thật vào Firestore thì có thể xóa đoạn if này.
+                    if (places.isEmpty()) {
+                        places = taoFakeData();
+                    }
+
+                    callback.onResult(places);
+                })
+                .addOnFailureListener(e -> {
+                    // Nếu lỗi mạng / lỗi quyền Firestore thì tạm dùng fake data để app không trắng màn hình
+                    callback.onResult(taoFakeData());
+                });
+    }
 
     // Lọc fake data theo danh sách favIds
     // Dùng tạm trong giai đoạn chưa có dữ liệu thật trên Firestore

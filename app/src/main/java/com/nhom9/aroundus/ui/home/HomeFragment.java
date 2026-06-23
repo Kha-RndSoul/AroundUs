@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.nhom9.aroundus.R;
 import com.nhom9.aroundus.adapter.PlaceAdapter;
 import com.nhom9.aroundus.model.Place;
+import com.nhom9.aroundus.repository.PlaceRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ public class HomeFragment extends Fragment {
 
     private EditText edtSearch;
     private TextView btnFilter;
+
+    private PlaceRepository placeRepository;
 
     private final List<Place> allPlaces = new ArrayList<>();
     private String currentCategory = "Tất cả";
@@ -57,49 +60,34 @@ public class HomeFragment extends Fragment {
         placeAdapter = new PlaceAdapter();
         rvPlaces.setAdapter(placeAdapter);
 
-        createFakeData();
-        placeAdapter.setPlaceList(allPlaces);
+        placeRepository = new PlaceRepository();
 
         setupSearch();
         setupFilter();
 
+        loadPlaces();
+
         return view;
     }
 
-    private void createFakeData() {
-        allPlaces.clear();
+    private void loadPlaces() {
+        placeRepository.getAllPlaces(places -> {
+            allPlaces.clear();
 
-        Place p1 = new Place();
-        p1.setPlaceId("place_001");
-        p1.setName("Cơm tấm sinh viên");
-        p1.setAddress("Gần Đại học Nông Lâm");
-        p1.setCategory("Quán ăn");
-        p1.setAvgRating(4.5);
-        allPlaces.add(p1);
+            if (places != null) {
+                allPlaces.addAll(places);
+            }
 
-        Place p2 = new Place();
-        p2.setPlaceId("place_002");
-        p2.setName("Vincom Thủ Đức");
-        p2.setAddress("TP. Thủ Đức");
-        p2.setCategory("Mua sắm");
-        p2.setAvgRating(4.2);
-        allPlaces.add(p2);
+            applyFilter();
 
-        Place p3 = new Place();
-        p2.setPlaceId("place_003");
-        p3.setName("Khu vui chơi Suối Tiên");
-        p3.setAddress("Xa lộ Hà Nội");
-        p3.setCategory("Khu vui chơi");
-        p3.setAvgRating(4.7);
-        allPlaces.add(p3);
-
-        Place p4 = new Place();
-        p2.setPlaceId("place_004");
-        p4.setName("Highlands Coffee");
-        p4.setAddress("Khu vực Thủ Đức");
-        p4.setCategory("Cà phê");
-        p4.setAvgRating(4.3);
-        allPlaces.add(p4);
+            if (allPlaces.isEmpty()) {
+                Toast.makeText(
+                        requireContext(),
+                        "Chưa có địa điểm nào để hiển thị",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
     }
 
     private void setupSearch() {
@@ -116,6 +104,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
+                // Không cần xử lý
             }
         });
     }
@@ -152,14 +141,18 @@ public class HomeFragment extends Fragment {
         List<Place> filteredList = new ArrayList<>();
 
         for (Place place : allPlaces) {
+            String name = safeLower(place.getName());
+            String address = safeLower(place.getAddress());
+            String category = safeLower(place.getCategory());
+
             boolean matchCategory =
                     currentCategory.equals("Tất cả")
                             || currentCategory.equals(place.getCategory());
 
             boolean matchSearch =
-                    place.getName().toLowerCase().contains(keyword)
-                            || place.getAddress().toLowerCase().contains(keyword)
-                            || place.getCategory().toLowerCase().contains(keyword);
+                    name.contains(keyword)
+                            || address.contains(keyword)
+                            || category.contains(keyword);
 
             if (matchCategory && matchSearch) {
                 filteredList.add(place);
@@ -168,10 +161,19 @@ public class HomeFragment extends Fragment {
 
         placeAdapter.setPlaceList(filteredList);
     }
-    // Refresh lại trạng thái tim trên các card mỗi khi quay về trang chủ
+
+    private String safeLower(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.toLowerCase();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+
         if (placeAdapter != null) {
             placeAdapter.notifyDataSetChanged();
         }
