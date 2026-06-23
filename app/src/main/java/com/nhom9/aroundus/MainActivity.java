@@ -14,6 +14,7 @@ import com.cloudinary.android.MediaManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.nhom9.aroundus.ui.favorites.FavoritesFragment;
 import com.nhom9.aroundus.ui.home.HomeFragment;
+import com.nhom9.aroundus.ui.profile.ProfileFragment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,14 +33,17 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Khởi tạo Cloudinary
-        Map<String, String> config = new HashMap<>();
-        config.put("cloud_name", "dfbijq8ur");
-        config.put("api_key", "418197113655413");
-        config.put("api_secret", "t871XwlMIj_N066Z-UbDvoQxfYI");
-        MediaManager.init(this, config);
+        // Khởi tạo Cloudinary (không dùng api_secret ở client)
+        try {
+            Map<String, String> config = new HashMap<>();
+            config.put("cloud_name", "dfbijq8ur");
+            config.put("api_key", "418197113655413");
+            MediaManager.init(this, config);
+        } catch (Exception ignored) {
+            // Tránh crash nếu MediaManager đã init trước đó
+        }
 
-        // Hiển thị HomeFragment mặc định khi app khởi động
+        // Mặc định mở Home
         if (savedInstanceState == null) {
             chuyenFragment(new HomeFragment());
         }
@@ -49,19 +53,23 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
 
             if (id == R.id.nav_home) {
-                // Tab Khám phá — màn hình danh sách địa điểm
                 chuyenFragment(new HomeFragment());
                 return true;
 
             } else if (id == R.id.nav_favorites) {
-                // Tab Yêu thích — màn hình danh sách địa điểm đã lưu
                 chuyenFragment(new FavoritesFragment());
                 return true;
 
-            } else if (id == R.id.nav_schedule
-                    || id == R.id.nav_contribute
-                    || id == R.id.nav_account) {
-                // Các tab Lịch trình, Đóng góp, Tài khoản chưa implement
+            } else if (id == R.id.nav_account) {
+                chuyenFragment(new ProfileFragment());
+                return true;
+
+            } else if (id == R.id.nav_contribute) {
+                android.content.Intent intent = new android.content.Intent(MainActivity.this, com.nhom9.aroundus.ui.place.AddPlaceActivity.class);
+                startActivity(intent);
+                return true;
+
+            } else if (id == R.id.nav_schedule) {
                 Toast.makeText(this, "Tính năng đang phát triển", Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -70,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Hàm chung để thay fragment vào fragmentContainer
     private void chuyenFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()

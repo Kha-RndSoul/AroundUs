@@ -7,7 +7,11 @@ import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 
+import java.util.Map;
+
 public class ImageUtils {
+
+    private static final String UPLOAD_PRESET = "aroundus_unsigned_preset";
 
     public interface UploadListener {
         void onSuccess(String imageUrl);
@@ -15,29 +19,31 @@ public class ImageUtils {
     }
 
     public static void uploadImage(Context context, Uri imageUri, UploadListener listener) {
+        if (imageUri == null) {
+            listener.onError("Ảnh không hợp lệ");
+            return;
+        }
+
         MediaManager.get().upload(imageUri)
-                .option("folder", "aroundus/places")
+                .unsigned(UPLOAD_PRESET)
                 .callback(new UploadCallback() {
-                    @Override
-                    public void onStart(String requestId) {}
+                    @Override public void onStart(String requestId) {}
+                    @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
 
                     @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {}
-
-                    @Override
-                    public void onSuccess(String requestId, java.util.Map resultData) {
-                        String url = (String) resultData.get("secure_url");
-                        listener.onSuccess(url);
+                    public void onSuccess(String requestId, Map resultData) {
+                        Object secureUrl = resultData.get("secure_url");
+                        if (secureUrl != null) listener.onSuccess(secureUrl.toString());
+                        else listener.onError("Không lấy được URL ảnh");
                     }
 
                     @Override
                     public void onError(String requestId, ErrorInfo error) {
-                        listener.onError(error.getDescription());
+                        listener.onError(error != null ? error.getDescription() : "Upload thất bại");
                     }
 
-                    @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {}
+                    @Override public void onReschedule(String requestId, ErrorInfo error) {}
                 })
-                .dispatch(context);
+                .dispatch();
     }
 }
