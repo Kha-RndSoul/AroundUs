@@ -10,7 +10,8 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.ImageView;
+import com.bumptech.glide.Glide;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,7 +42,7 @@ public class HomeFragment extends Fragment {
 
     private final List<Place> allPlaces = new ArrayList<>();
     private String currentCategory = "Tất cả";
-    private TextView tvAvatar;
+    private ImageView ivAvatar;
     private TextView tvUserName;
     private TextView tvGreeting;
 
@@ -61,7 +62,7 @@ public class HomeFragment extends Fragment {
         rvPlaces = view.findViewById(R.id.rvPlaces);
         edtSearch = view.findViewById(R.id.edtSearch);
         btnFilter = view.findViewById(R.id.btnFilter);
-        tvAvatar = view.findViewById(R.id.tvAvatar);
+        ivAvatar = view.findViewById(R.id.ivAvatar);
         tvUserName = view.findViewById(R.id.tvUserName);
         tvGreeting = view.findViewById(R.id.tvGreeting);
 
@@ -177,7 +178,7 @@ public class HomeFragment extends Fragment {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (currentUser == null) {
-            updateHeaderUser("Khách");
+            updateHeaderUser("Khách", null);
             return;
         }
 
@@ -189,11 +190,11 @@ public class HomeFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     String displayName = null;
+                    String avatarUrl = null;
 
                     if (snapshot.exists()) {
                         displayName = snapshot.getString("displayName");
 
-                        // Dự phòng nếu nhóm lỡ lưu field tên bằng tên khác
                         if (isBlank(displayName)) {
                             displayName = snapshot.getString("name");
                         }
@@ -201,14 +202,22 @@ public class HomeFragment extends Fragment {
                         if (isBlank(displayName)) {
                             displayName = snapshot.getString("username");
                         }
+
+                        avatarUrl = snapshot.getString("avatarUrl");
+
+                        if (isBlank(avatarUrl)) {
+                            avatarUrl = snapshot.getString("photoUrl");
+                        }
+
+                        if (isBlank(avatarUrl)) {
+                            avatarUrl = snapshot.getString("avatar");
+                        }
                     }
 
-                    // Dự phòng lấy từ FirebaseAuth
                     if (isBlank(displayName)) {
                         displayName = currentUser.getDisplayName();
                     }
 
-                    // Dự phòng cuối: lấy phần trước @ trong email
                     if (isBlank(displayName) && currentUser.getEmail() != null) {
                         displayName = currentUser.getEmail().split("@")[0];
                     }
@@ -217,10 +226,15 @@ public class HomeFragment extends Fragment {
                         displayName = "Người dùng";
                     }
 
-                    updateHeaderUser(displayName);
+                    if (isBlank(avatarUrl) && currentUser.getPhotoUrl() != null) {
+                        avatarUrl = currentUser.getPhotoUrl().toString();
+                    }
+
+                    updateHeaderUser(displayName, avatarUrl);
                 })
                 .addOnFailureListener(e -> {
                     String fallbackName = currentUser.getDisplayName();
+                    String fallbackAvatarUrl = null;
 
                     if (isBlank(fallbackName) && currentUser.getEmail() != null) {
                         fallbackName = currentUser.getEmail().split("@")[0];
@@ -230,18 +244,27 @@ public class HomeFragment extends Fragment {
                         fallbackName = "Người dùng";
                     }
 
-                    updateHeaderUser(fallbackName);
+                    if (currentUser.getPhotoUrl() != null) {
+                        fallbackAvatarUrl = currentUser.getPhotoUrl().toString();
+                    }
+
+                    updateHeaderUser(fallbackName, fallbackAvatarUrl);
                 });
     }
 
-    private void updateHeaderUser(String displayName) {
+    private void updateHeaderUser(String displayName, String avatarUrl) {
         tvUserName.setText("Xin chào, " + displayName);
         tvGreeting.setText("Hôm nay bạn muốn khám phá nơi nào?");
 
-        if (!isBlank(displayName)) {
-            tvAvatar.setText(displayName.substring(0, 1).toUpperCase());
+        if (!isBlank(avatarUrl)) {
+            Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.ic_default_avatar)
+                    .error(R.drawable.ic_default_avatar)
+                    .circleCrop()
+                    .into(ivAvatar);
         } else {
-            tvAvatar.setText("U");
+            ivAvatar.setImageResource(R.drawable.ic_default_avatar);
         }
     }
 

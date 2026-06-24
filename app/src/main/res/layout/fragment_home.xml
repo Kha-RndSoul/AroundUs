@@ -20,15 +20,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/tvAvatar"
+        <ImageView
+            android:id="@+id/ivAvatar"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:gravity="center"
-            android:text="P"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:background="#C8E6C9" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_default_avatar"
+            android:contentDescription="Ảnh đại diện" />
 
         <LinearLayout
             android:layout_width="0dp"
