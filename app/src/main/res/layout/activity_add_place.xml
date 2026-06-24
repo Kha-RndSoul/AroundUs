@@ -26,7 +26,6 @@
             android:id="@+id/edtPlaceName"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Tên địa điểm (Ví dụ: Quán phở A, Cà phê B)"
             android:inputType="text"
             android:background="@android:drawable/editbox_background"
             android:paddingLeft="12dp"
@@ -36,10 +35,9 @@
             android:textStyle="bold"/>
 
         <EditText
-            android:id="@+id/edtPlaceCategory"
+            android:id="@+id/edtPlaceAddress"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Danh mục (Ví dụ: Quán ăn, Mua sắm, Giải trí)"
             android:inputType="text"
             android:background="@android:drawable/editbox_background"
             android:paddingLeft="12dp"
@@ -47,12 +45,25 @@
             android:textColorHint="#555555"
             android:textColor="#000000"
             android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tvPlaceCategory"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@android:drawable/editbox_background"
+            android:paddingLeft="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp"
+            android:textColorHint="#555555"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="false"/>
 
         <EditText
             android:id="@+id/edtPlaceDescription"
             android:layout_width="match_parent"
             android:layout_height="120dp"
-            android:hint="Mô tả chi tiết về địa điểm này có gì thú vị..."
             android:inputType="textMultiLine"
             android:gravity="top|left"
             android:background="@android:drawable/editbox_background"
@@ -66,19 +77,48 @@
             android:id="@+id/btnSelectImage"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:text="Chọn hình ảnh từ điện thoại"
+            android:text="Chọn hình ảnh (1 đến 3 ảnh)"
             android:backgroundTint="#00796B"
             android:textColor="#FFFFFF"
             android:layout_marginBottom="12dp"/>
 
-        <ImageView
-            android:id="@+id/imgPlacePreview"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:background="#EEEEEE"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:layout_marginBottom="20dp"
-            android:contentDescription="Ảnh xem trước"/>
+            android:gravity="center"
+            android:weightSum="3">
+
+            <ImageView
+                android:id="@+id/imgPreview1"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:scaleType="centerCrop"
+                android:layout_marginEnd="4dp"
+                android:background="#EEEEEE"
+                android:visibility="gone"/>
+
+            <ImageView
+                android:id="@+id/imgPreview2"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:scaleType="centerCrop"
+                android:layout_marginEnd="4dp"
+                android:background="#EEEEEE"
+                android:visibility="gone"/>
+
+            <ImageView
+                android:id="@+id/imgPreview3"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:scaleType="centerCrop"
+                android:background="#EEEEEE"
+                android:visibility="gone"/>
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/progressBar"
