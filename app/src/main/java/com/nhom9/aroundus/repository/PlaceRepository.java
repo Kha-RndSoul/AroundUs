@@ -111,20 +111,16 @@ public class PlaceRepository {
     }
 
     public void addPlace(Place place, OnCompleteListener<Void> listener) {
-        // DocumentReference trống để lấy ID ngẫu nhiên
-        DocumentReference newDocRef = db.collection("places").document();
-
-        // Lấy ID vừa sinh ra bỏ vào field placeId của object Place
-        place.setPlaceId(newDocRef.getId());
-
-        // Gán thêm người tạo (createdBy)
         String uid = getCurrentUid();
+
         if (uid != null) {
             place.setCreatedBy(uid);
         }
 
-        // Lưu object đã đầy đủ ID lên Document
-        newDocRef.set(place).addOnCompleteListener(listener);
+        DocumentReference docRef = db.collection("places").document();
+        place.setPlaceId(docRef.getId());
+
+        docRef.set(place).addOnCompleteListener(listener);
     }
     public void getAllPlaces(PlaceListCallback callback) {
         db.collection("places")
@@ -218,4 +214,5 @@ public class PlaceRepository {
     public interface ReviewListCallback {
         void onResult(List<Review> reviews);
     }
+
 }
