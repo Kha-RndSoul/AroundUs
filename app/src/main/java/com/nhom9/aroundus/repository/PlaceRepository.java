@@ -7,7 +7,8 @@ import com.google.firebase.firestore.SetOptions;
 import com.nhom9.aroundus.model.Place;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.DocumentReference;
-
+import com.google.firebase.Timestamp;
+import com.nhom9.aroundus.model.Review;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,7 +78,6 @@ public class PlaceRepository {
 
     // Lấy toàn bộ danh sách địa điểm yêu thích của user
     // Ưu tiên lấy từ Firestore collection "places"
-    // Nếu không có (đang dùng fake data) thì lọc từ fake data theo favIds
     public void getFavoritePlaces(PlaceListCallback callback) {
         String uid = getCurrentUid();
         if (uid == null) { callback.onResult(new ArrayList<>()); return; }
@@ -102,10 +102,6 @@ public class PlaceRepository {
                                 for (var doc : querySnapshot.getDocuments()) {
                                     Place p = doc.toObject(Place.class);
                                     if (p != null) result.add(p);
-                                }
-                                // Nếu Firestore không có dữ liệu thật thì dùng fake data tạm
-                                if (result.isEmpty()) {
-                                    result = layFakeDataTheoFavIds(favIds);
                                 }
                                 callback.onResult(result);
                             })
@@ -148,73 +144,62 @@ public class PlaceRepository {
                         }
                     }
 
-                    // Tạm thời fallback về fake data nếu Firestore chưa có dữ liệu
-                    // Sau khi nhóm đã nhập dữ liệu thật vào Firestore thì có thể xóa đoạn if này.
-                    if (places.isEmpty()) {
-                        places = taoFakeData();
-                    }
-
                     callback.onResult(places);
-                })
-                .addOnFailureListener(e -> {
-                    // Nếu lỗi mạng / lỗi quyền Firestore thì tạm dùng fake data để app không trắng màn hình
-                    callback.onResult(taoFakeData());
                 });
     }
+    // Thêm đánh giá mới
+    public void addReview(Review review, ActionCallback callback) {
+        String uid = getCurrentUid();
 
-    // Lọc fake data theo danh sách favIds
-    // Dùng tạm trong giai đoạn chưa có dữ liệu thật trên Firestore
-    private List<Place> layFakeDataTheoFavIds(List<String> favIds) {
-        List<Place> fakeAll = taoFakeData();
-        List<Place> result = new ArrayList<>();
-        for (Place p : fakeAll) {
-            if (favIds.contains(p.getPlaceId())) {
-                result.add(p);
-            }
+        if (uid == null) {
+            callback.onError("Bạn cần đăng nhập để viết đánh giá");
+            return;
         }
-        return result;
+
+        DocumentReference docRef = db.collection("reviews").document();
+
+        review.setReviewId(docRef.getId());
+        review.setUserId(uid);
+        review.setCreatedAt(Timestamp.now());
+
+        docRef.set(review)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onError(e.getMessage()));
     }
 
-    // Fake data tập trung một chỗ, dùng chung cho cả Repository và HomeFragment
-    // Đảm bảo placeId nhất quán giữa các màn hình
-    public static List<Place> taoFakeData() {
-        List<Place> list = new ArrayList<>();
+    // Lấy danh sách đánh giá theo placeId
+    public void getReviewsByPlaceId(String placeId, ReviewListCallback callback) {
+        db.collection("reviews")
+                .whereEqualTo("placeId", placeId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Review> reviews = new ArrayList<>();
 
-        Place p1 = new Place();
-        p1.setPlaceId("place_001");
-        p1.setName("Cơm tấm sinh viên");
-        p1.setAddress("Gần Đại học Nông Lâm");
-        p1.setCategory("Quán ăn");
-        p1.setAvgRating(4.5);
-        list.add(p1);
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Review review = doc.toObject(Review.class);
 
-        Place p2 = new Place();
-        p2.setPlaceId("place_002");
-        p2.setName("Vincom Thủ Đức");
-        p2.setAddress("TP. Thủ Đức");
-        p2.setCategory("Mua sắm");
-        p2.setAvgRating(4.2);
-        list.add(p2);
+                        if (review != null) {
+                            if (review.getReviewId() == null || review.getReviewId().isEmpty()) {
+                                review.setReviewId(doc.getId());
+                            }
 
-        Place p3 = new Place();
-        p3.setPlaceId("place_003");
-        p3.setName("Khu vui chơi Suối Tiên");
-        p3.setAddress("Xa lộ Hà Nội");
-        p3.setCategory("Khu vui chơi");
-        p3.setAvgRating(4.7);
-        list.add(p3);
+                            reviews.add(review);
+                        }
+                    }
 
-        Place p4 = new Place();
-        p4.setPlaceId("place_004");
-        p4.setName("Highlands Coffee");
-        p4.setAddress("Khu vực Thủ Đức");
-        p4.setCategory("Cà phê");
-        p4.setAvgRating(4.3);
-        list.add(p4);
-
-        return list;
+                    callback.onResult(reviews);
+                })
+                .addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
     }
 
+    // Cập nhật điểm trung bình của địa điểm
+    public void updatePlaceRating(String placeId, double avgRating) {
+        if (placeId == null || placeId.isEmpty()) return;
+
+        db.collection("places")
+                .document(placeId)
+                .update("avgRating", avgRating);
+    }
     // Interface callback trả về boolean (dùng cho isFavorite)
     public interface FavoriteCallback {
         void onResult(boolean isFavorite);
@@ -229,5 +214,8 @@ public class PlaceRepository {
     // Interface callback trả về danh sách Place
     public interface PlaceListCallback {
         void onResult(List<Place> places);
+    }
+    public interface ReviewListCallback {
+        void onResult(List<Review> reviews);
     }
 }
