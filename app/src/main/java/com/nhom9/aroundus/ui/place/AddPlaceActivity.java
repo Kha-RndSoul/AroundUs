@@ -32,7 +32,7 @@ public class AddPlaceActivity extends AppCompatActivity {
 
     private EditText edtPlaceName, edtPlaceAddress, edtPlaceDescription;
     private TextView tvPlaceCategory;
-    private ImageView imgPreview1, imgPreview2, imgPreview3;
+    private ImageView imgPreview1, imgPreview2, imgPreview3, btnBack;
     private Button btnSelectImage, btnSavePlace;
     private ProgressBar progressBar;
 
@@ -79,6 +79,7 @@ public class AddPlaceActivity extends AppCompatActivity {
         imgPreview1 = findViewById(R.id.imgPreview1);
         imgPreview2 = findViewById(R.id.imgPreview2);
         imgPreview3 = findViewById(R.id.imgPreview3);
+        btnBack = findViewById(R.id.btnBack);
 
         btnSelectImage = findViewById(R.id.btnSelectImage);
         btnSavePlace = findViewById(R.id.btnSavePlace);
@@ -156,6 +157,8 @@ public class AddPlaceActivity extends AppCompatActivity {
 
             uploadImagesToCloudinary();
         });
+
+        btnBack.setOnClickListener(v -> finish());
     }
 
     // Duyệt mảng URI và đẩy lên Cloudinary
@@ -215,9 +218,6 @@ public class AddPlaceActivity extends AppCompatActivity {
 
         placeRepository.addPlace(newPlace, task -> {
             if (task.isSuccessful()) {
-                String documentId = task.getResult().getId();
-                newPlace.setPlaceId(documentId);
-
                 Toast.makeText(AddPlaceActivity.this, "Đăng địa điểm thành công!", Toast.LENGTH_LONG).show();
                 finish();
             } else {

@@ -114,15 +114,21 @@ public class PlaceRepository {
                 .addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
     }
 
-    public void addPlace(Place place, OnCompleteListener<DocumentReference> listener) {
+    public void addPlace(Place place, OnCompleteListener<Void> listener) {
+        // DocumentReference trống để lấy ID ngẫu nhiên
+        DocumentReference newDocRef = db.collection("places").document();
+
+        // Lấy ID vừa sinh ra bỏ vào field placeId của object Place
+        place.setPlaceId(newDocRef.getId());
+
+        // Gán thêm người tạo (createdBy)
         String uid = getCurrentUid();
         if (uid != null) {
             place.setCreatedBy(uid);
         }
 
-        db.collection("places")
-                .add(place)
-                .addOnCompleteListener(listener);
+        // Lưu object đã đầy đủ ID lên Document
+        newDocRef.set(place).addOnCompleteListener(listener);
     }
     public void getAllPlaces(PlaceListCallback callback) {
         db.collection("places")
