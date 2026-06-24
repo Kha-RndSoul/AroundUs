@@ -192,7 +192,20 @@ public class PlaceDetailActivity extends AppCompatActivity implements OnMapReady
                     .title(currentPlace.getName()));
             googleMapInstance.moveCamera(CameraUpdateFactory.newLatLngZoom(viTriDiaDiem, 15f));
         }
+        // Tải ảnh từ Cloudinary qua Glide, lần lượt ảnh lớn rồi 2 ảnh nhỏ
+        List<String> urls = currentPlace.getImageUrls();
+        if (urls != null && !urls.isEmpty()) {
+            Glide.with(this).load(urls.get(0)).centerCrop().into(imgPlaceBig);
+            if (urls.size() > 1) Glide.with(this).load(urls.get(1)).centerCrop().into(imgPlaceSmall1);
+            if (urls.size() > 2) Glide.with(this).load(urls.get(2)).centerCrop().into(imgPlaceSmall2);
+
+            // Bấm vào từng ảnh để mở xem full màn hình, đúng vị trí ảnh đã bấm
+            imgPlaceBig.setOnClickListener(v -> ImageViewerActivity.open(this, urls, 0));
+            if (urls.size() > 1) imgPlaceSmall1.setOnClickListener(v -> ImageViewerActivity.open(this, urls, 1));
+            if (urls.size() > 2) imgPlaceSmall2.setOnClickListener(v -> ImageViewerActivity.open(this, urls, 2));
+        }
     }
+
 
     @Override
     protected void onResume() { super.onResume(); mapViewLocation.onResume(); }
