@@ -15,6 +15,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.nhom9.aroundus.ui.favorites.FavoritesFragment;
 import com.nhom9.aroundus.ui.home.HomeFragment;
 import com.nhom9.aroundus.ui.profile.ProfileFragment;
+import com.nhom9.aroundus.ui.schedule.ScheduleFragment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             } else if (id == R.id.nav_schedule) {
-                Toast.makeText(this, "Tính năng đang phát triển", Toast.LENGTH_SHORT).show();
+                chuyenFragment(new ScheduleFragment());
                 return true;
             }
 
