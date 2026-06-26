@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Địa điểm"
+        android:textColor="#222222"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvSelectedPlace"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:background="#F1F1F1"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:text="Chưa chọn địa điểm"
+        android:textColor="#555555" />
+
+    <Button
+        android:id="@+id/btnChoosePlace"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:text="Chọn địa điểm"
+        android:textAllCaps="false" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="Ngày giờ"
+        android:textColor="#222222"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvSelectedDateTime"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:background="#F1F1F1"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:text="Chưa chọn ngày giờ"
+        android:textColor="#555555" />
+
+    <Button
+        android:id="@+id/btnChooseDateTime"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:text="Chọn ngày giờ"
+        android:textAllCaps="false" />
+
+    <EditText
+        android:id="@+id/edtScheduleNote"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:layout_marginTop="18dp"
+        android:background="#F1F1F1"
+        android:gravity="top"
+        android:hint="Ghi chú, ví dụ: đi với bạn, ghé lúc quán mở cửa..."
+        android:inputType="textMultiLine"
+        android:padding="12dp" />
+
+</LinearLayout>
