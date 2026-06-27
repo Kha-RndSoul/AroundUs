@@ -62,25 +62,21 @@
             android:textSize="22sp" />
     </LinearLayout>
 
-    <!-- Bản đồ giả hiển thị khu vực -->
+    <!-- Bản đồ Google Map hiển thị các địa điểm -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="0dp"
-        android:layout_height="170dp"
+        android:layout_height="190dp"
         android:layout_margin="16dp"
         android:background="#DDEFE3"
         app:layout_constraintTop_toBottomOf="@id/headerLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Map View"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#555555"
-            android:layout_gravity="center" />
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/homeMapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <Button
             android:id="@+id/btnChooseArea"
@@ -89,17 +85,6 @@
             android:text="Chọn khu vực"
             android:layout_gravity="top|start"
             android:layout_margin="10dp" />
-
-        <TextView
-            android:id="@+id/tvMarker1"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:gravity="center"
-            android:text="12"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:background="#4CAF50"
-            android:layout_gravity="center" />
 
         <TextView
             android:id="@+id/btnLocation"
@@ -111,6 +96,7 @@
             android:background="#FFFFFF"
             android:layout_gravity="bottom|end"
             android:layout_margin="10dp" />
+
     </FrameLayout>
 
     <!-- Thanh tìm kiếm và lọc danh mục -->
