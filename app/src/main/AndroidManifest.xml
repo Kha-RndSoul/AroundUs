@@ -35,7 +35,7 @@
         <!-- api gg map -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_API_KEY_HERE" />
+            android:value="AIzaSyAycyerooSSL0T1k2REvEHBPl7M9EoKQ6E" />
 
         <activity
             android:name=".ui.place.AddPlaceActivity"
