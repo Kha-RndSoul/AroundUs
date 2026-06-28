@@ -8,7 +8,7 @@
     android:background="#FDFBF7"
     tools:context=".ui.place.PlaceDetailActivity">
 
-    Khu vực phía trên chứa hình ảnh của địa điểm
+    <!-- Khu vực phía trên chứa hình ảnh của địa điểm -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,7 +20,7 @@
             android:layout_height="250dp"
             app:layout_scrollFlags="scroll|enterAlways|snap">
 
-            Hình ảnh chính kích thước lớn ở bên trái
+            <!-- Hình ảnh chính kích thước lớn ở bên trái -->
             <ImageView
                 android:id="@+id/imgPlaceBig"
                 android:layout_width="0dp"
@@ -30,7 +30,7 @@
                 app:layout_constraintWidth_percent="0.65"
                 app:layout_constraintStart_toStartOf="parent" />
 
-            Khu vực chứa hai hình ảnh nhỏ ở bên phải
+            <!-- Khu vực chứa hai hình ảnh nhỏ ở bên phải -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -39,7 +39,7 @@
                 app:layout_constraintStart_toEndOf="@id/imgPlaceBig"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                Hình ảnh phụ thứ nhất
+                <!-- Hình ảnh phụ thứ nhất -->
                 <ImageView
                     android:id="@+id/imgPlaceSmall1"
                     android:layout_width="match_parent"
@@ -48,13 +48,13 @@
                     android:scaleType="centerCrop"
                     android:background="#D6D6D6" />
 
-                Đường viền trắng ngăn cách hai ảnh nhỏ
+                <!-- Đường viền trắng ngăn cách hai ảnh nhỏ -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="2dp"
                     android:background="#FFFFFF"/>
 
-                Hình ảnh phụ thứ hai
+                <!-- Hình ảnh phụ thứ hai -->
                 <ImageView
                     android:id="@+id/imgPlaceSmall2"
                     android:layout_width="match_parent"
@@ -64,14 +64,14 @@
                     android:background="#CCCCCC" />
             </LinearLayout>
 
-            Đường viền trắng ngăn cách ảnh lớn và ảnh nhỏ
+            <!-- Đường viền trắng ngăn cách ảnh lớn và ảnh nhỏ -->
             <View
                 android:layout_width="2dp"
                 android:layout_height="match_parent"
                 android:background="#FFFFFF"
                 app:layout_constraintStart_toEndOf="@id/imgPlaceBig" />
 
-            Nút quay lại màn hình trước
+            <!-- Nút quay lại màn hình trước -->
             <ImageButton
                 android:id="@+id/btnBack"
                 android:layout_width="40dp"
@@ -86,12 +86,11 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    Khu vực nội dung chi tiết có thể cuộn lên xuống
+    <!-- Khu vực nội dung chi tiết có thể cuộn lên xuống -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:layout_marginBottom="80dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -100,7 +99,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            Tên địa điểm và điểm đánh giá
+            <!-- Tên địa điểm và điểm đánh giá -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -143,7 +142,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            Địa chỉ của địa điểm
+            <!-- Địa chỉ của địa điểm -->
             <TextView
                 android:id="@+id/tvAddress"
                 android:layout_width="match_parent"
@@ -153,18 +152,7 @@
                 android:textColor="#555555"
                 tools:text="Địa chỉ chi tiết" />
 
-            Giờ mở cửa
-            <TextView
-                android:id="@+id/tvHoursStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="14sp"
-                android:textColor="#4CAF50"
-                android:textStyle="bold"
-                tools:text="10:00 đến 22:00" />
-
-            Nút lưu yêu thích hình trái tim
+            <!-- Nút lưu yêu thích hình trái tim -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveFavorite"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -178,8 +166,22 @@
                 app:icon="@drawable/ic_heart_outline"
                 app:iconTint="#FF5252"
                 app:strokeColor="#DDDDDD" />
-
-            Phần mô tả chi tiết
+            
+            <!-- Nút thêm địa điểm này vào lịch trình -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddToSchedule"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Thêm vào lịch trình"
+                android:textAllCaps="false"
+                android:textColor="#555555"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_menu_my_calendar"
+                app:iconTint="#F4A460"
+                app:strokeColor="#DDDDDD" />
+            <!-- Phần mô tả chi tiết -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -199,7 +201,7 @@
                 android:lineSpacingExtra="6dp"
                 tools:text="Nội dung mô tả" />
 
-            Bản đồ hiển thị vị trí
+            <!-- Bản đồ hiển thị vị trí -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -224,7 +226,7 @@
                     android:layout_height="match_parent" />
             </com.google.android.material.card.MaterialCardView>
 
-            Khu vực bình luận đánh giá
+            <!-- Khu vực bình luận đánh giá -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -254,31 +256,12 @@
                 android:layout_marginTop="16dp"
                 android:nestedScrollingEnabled="false" />
 
+            <!-- Khoảng đệm cuối trang để nội dung không bị sát mép dưới -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
-    Nút chỉ đường luôn nổi ở góc dưới cùng
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_gravity="bottom"
-        android:background="#FFFFFF"
-        android:gravity="center"
-        android:paddingHorizontal="24dp"
-        android:elevation="8dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNavigateDirections"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="Chỉ đường tới đây"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            app:cornerRadius="25dp"
-            app:backgroundTint="#F4A460" />
-    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
