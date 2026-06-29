@@ -41,6 +41,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.nhom9.aroundus.ui.place.PlaceDetailActivity;
+import java.text.Normalizer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,10 +65,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private TextView tvGreeting;
     private MapView homeMapView;
     private GoogleMap googleMap;
+    private TextView btnZoomIn;
+    private TextView btnZoomOut;
     private LatLngBounds currentMapBounds;
-    private boolean hasMovedCameraToFirstPlace = false;
+    //private boolean hasMovedCameraToFirstPlace = false;
     private static final LatLng HCM_CENTER = new LatLng(10.7769, 106.7009);
-    private boolean hasAdjustedInitialCamera = false;
+    //private boolean hasAdjustedInitialCamera = false;
 
     private final Map<Marker, Place> markerPlaceMap = new HashMap<>();
 
@@ -86,6 +89,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         homeMapView = view.findViewById(R.id.homeMapView);
         homeMapView.onCreate(savedInstanceState);
         homeMapView.getMapAsync(this);
+        btnZoomIn = view.findViewById(R.id.btnZoomIn);
+        btnZoomOut = view.findViewById(R.id.btnZoomOut);
         rvPlaces = view.findViewById(R.id.rvPlaces);
         edtSearch = view.findViewById(R.id.edtSearch);
         btnFilter = view.findViewById(R.id.btnFilter);
@@ -131,6 +136,19 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         "Chưa có địa điểm nào để hiển thị",
                         Toast.LENGTH_SHORT
                 ).show();
+            }
+        });
+    }
+    private void setupZoomButtons() {
+        btnZoomIn.setOnClickListener(v -> {
+            if (googleMap != null) {
+                googleMap.animateCamera(CameraUpdateFactory.zoomIn());
+            }
+        });
+
+        btnZoomOut.setOnClickListener(v -> {
+            if (googleMap != null) {
+                googleMap.animateCamera(CameraUpdateFactory.zoomOut());
             }
         });
     }
@@ -181,23 +199,22 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void applyFilter() {
-        String keyword = edtSearch.getText().toString().trim().toLowerCase();
+        String keyword = normalizeSearchText(edtSearch.getText().toString());
 
         List<Place> filteredList = new ArrayList<>();
 
         for (Place place : allPlaces) {
-            String name = safeLower(place.getName());
-            String address = safeLower(place.getAddress());
-            String category = safeLower(place.getCategory());
+            String category = safeString(place.getCategory());
 
             boolean matchCategory =
                     currentCategory.equals("Tất cả")
-                            || currentCategory.equals(place.getCategory());
+                            || currentCategory.equals(category);
+
+            String searchContent = buildSearchContent(place);
 
             boolean matchSearch =
-                    name.contains(keyword)
-                            || address.contains(keyword)
-                            || category.contains(keyword);
+                    keyword.isEmpty()
+                            || searchContent.contains(keyword);
 
             boolean matchMapBounds = isPlaceInCurrentMapBounds(place);
 
@@ -308,12 +325,38 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         return value == null || value.trim().isEmpty();
     }
 
-    private String safeLower(String value) {
+    private String normalizeSearchText(String value) {
         if (value == null) {
             return "";
         }
 
-        return value.toLowerCase();
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        normalized = normalized.replace("đ", "d").replace("Đ", "D");
+
+        return normalized.toLowerCase().trim();
+    }
+
+    private String safeString(String value) {
+        return value == null ? "" : value;
+    }
+    private String buildSearchContent(Place place) {
+        if (place == null) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(safeString(place.getName())).append(" ");
+        builder.append(safeString(place.getAddress())).append(" ");
+        builder.append(safeString(place.getCategory())).append(" ");
+        builder.append(safeString(place.getDescription())).append(" ");
+        builder.append(safeString(place.getOpeningHour())).append(" ");
+        builder.append(safeString(place.getClosingHour())).append(" ");
+        builder.append(safeString(place.getPlaceId())).append(" ");
+        builder.append(place.getAvgRating());
+
+        return normalizeSearchText(builder.toString());
     }
 
     @Override
@@ -322,6 +365,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(HCM_CENTER, 11.5f));
         googleMap.getUiSettings().setZoomControlsEnabled(false);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        setupZoomButtons();
 
         googleMap.setOnCameraIdleListener(() -> {
             if (googleMap == null) {
