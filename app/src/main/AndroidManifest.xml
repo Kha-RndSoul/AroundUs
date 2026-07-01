@@ -15,7 +15,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AroundUs">
 
-        <!-- SplashActivity là màn hình khởi động -->
         <activity
             android:name=".ui.auth.SplashActivity"
             android:exported="true">
@@ -28,23 +27,25 @@
         <activity android:name=".MainActivity"/>
         <activity android:name=".ui.auth.LoginActivity"/>
         <activity android:name=".ui.auth.RegisterActivity"/>
+
         <activity
             android:name=".ui.place.PlaceDetailActivity"
             android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
-        <!-- api gg map -->
+            android:theme="@style/Theme.AroundUs" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAycyerooSSL0T1k2REvEHBPl7M9EoKQ6E" />
 
         <activity
             android:name=".ui.place.AddPlaceActivity"
-            android:exported="true">
-        </activity>
+            android:exported="true" />
+
         <activity
             android:name=".ui.place.ImageViewerActivity"
             android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
+            android:theme="@style/Theme.AroundUs" />
+
     </application>
 
 </manifest>
