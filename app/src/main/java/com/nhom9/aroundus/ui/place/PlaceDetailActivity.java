@@ -218,11 +218,11 @@ public class PlaceDetailActivity extends AppCompatActivity implements OnMapReady
         if (isFavoriteSelected) {
             // Trái tim đặc = đã yêu thích
             btnSaveFavorite.setIconResource(R.drawable.ic_heart_filled);
-            btnSaveFavorite.setText("Đã lưu");
+            btnSaveFavorite.setText("Đã thêm");
         } else {
             // Trái tim rỗng = chưa yêu thích
             btnSaveFavorite.setIconResource(R.drawable.ic_heart_outline);
-            btnSaveFavorite.setText("Lưu vào danh sách");
+            btnSaveFavorite.setText("Thêm vào yêu thích");
         }
     }
 

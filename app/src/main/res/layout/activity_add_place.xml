@@ -129,7 +129,15 @@
                 android:background="#EEEEEE"
                 android:visibility="gone"/>
         </LinearLayout>
-
+        <!-- Hiển thị tọa độ lấy được từ địa chỉ, ẩn khi chưa có -->
+        <TextView
+            android:id="@+id/tvLatLng"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textColor="#4CAF50"
+            android:textSize="13sp"
+            android:visibility="gone" />
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"

@@ -1,18 +1,21 @@
 package com.nhom9.aroundus.ui.place;
 
-import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.View;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -31,7 +34,7 @@ import android.text.style.AbsoluteSizeSpan;
 public class AddPlaceActivity extends AppCompatActivity {
 
     private EditText edtPlaceName, edtPlaceAddress, edtPlaceDescription;
-    private TextView tvPlaceCategory;
+    private TextView tvPlaceCategory, tvLatLng;
     private ImageView imgPreview1, imgPreview2, imgPreview3, btnBack;
     private Button btnSelectImage, btnSavePlace;
     private ProgressBar progressBar;
@@ -39,11 +42,13 @@ public class AddPlaceActivity extends AppCompatActivity {
     private PlaceRepository placeRepository;
 
     private List<Uri> selectedImageUris = new ArrayList<>();
-
-    // Đếm số lượng ảnh đã upload thành công
     private int uploadSuccessCount = 0;
 
-    // Xử lý kết quả trả về khi chọn nhiều hình ảnh
+    // Tọa độ lấy được từ Geocoder
+    private double resolvedLat = 0.0;
+    private double resolvedLng = 0.0;
+
+    // Launcher chọn nhiều ảnh từ thư viện
     private final ActivityResultLauncher<String> pickMultipleImagesLauncher = registerForActivityResult(
             new ActivityResultContracts.GetMultipleContents(),
             uris -> {
@@ -71,19 +76,18 @@ public class AddPlaceActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        edtPlaceName = findViewById(R.id.edtPlaceName);
-        edtPlaceAddress = findViewById(R.id.edtPlaceAddress);
-        tvPlaceCategory = findViewById(R.id.tvPlaceCategory);
+        edtPlaceName        = findViewById(R.id.edtPlaceName);
+        edtPlaceAddress     = findViewById(R.id.edtPlaceAddress);
+        tvPlaceCategory     = findViewById(R.id.tvPlaceCategory);
         edtPlaceDescription = findViewById(R.id.edtPlaceDescription);
-
-        imgPreview1 = findViewById(R.id.imgPreview1);
-        imgPreview2 = findViewById(R.id.imgPreview2);
-        imgPreview3 = findViewById(R.id.imgPreview3);
-        btnBack = findViewById(R.id.btnBack);
-
-        btnSelectImage = findViewById(R.id.btnSelectImage);
-        btnSavePlace = findViewById(R.id.btnSavePlace);
-        progressBar = findViewById(R.id.progressBar);
+        imgPreview1         = findViewById(R.id.imgPreview1);
+        imgPreview2         = findViewById(R.id.imgPreview2);
+        imgPreview3         = findViewById(R.id.imgPreview3);
+        btnBack             = findViewById(R.id.btnBack);
+        btnSelectImage      = findViewById(R.id.btnSelectImage);
+        btnSavePlace        = findViewById(R.id.btnSavePlace);
+        progressBar         = findViewById(R.id.progressBar);
+        tvLatLng            = findViewById(R.id.tvLatLng);
 
         SpannableString hintName = new SpannableString("Tên địa điểm (Ví dụ: Quán phở A, Cà phê B)");
         hintName.setSpan(new AbsoluteSizeSpan(14, true), 0, hintName.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
@@ -102,6 +106,7 @@ public class AddPlaceActivity extends AppCompatActivity {
         edtPlaceDescription.setHint(hintDesc);
     }
 
+    // Hiển thị ảnh preview theo số lượng đã chọn
     private void displaySelectedImages() {
         imgPreview1.setVisibility(View.GONE);
         imgPreview2.setVisibility(View.GONE);
@@ -122,21 +127,20 @@ public class AddPlaceActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
+        // Chọn danh mục từ dialog
         tvPlaceCategory.setOnClickListener(v -> {
-            String[] categories = {"Quán ăn", "Cà phê", "Mua sắm", "Khu vui chơi"};
+            String[] categories = {"Quán ăn", "Quán cf", "Mua sắm", "Khu vui chơi"};
             new AlertDialog.Builder(this)
                     .setTitle("Chọn danh mục")
-                    .setItems(categories, (dialog, which) -> {
-                        tvPlaceCategory.setText(categories[which]);
-                    })
+                    .setItems(categories, (dialog, which) ->
+                            tvPlaceCategory.setText(categories[which]))
                     .show();
         });
 
-        // Gọi laucher lấy nhiều ảnh
-        btnSelectImage.setOnClickListener(v -> {
-            pickMultipleImagesLauncher.launch("image/*");
-        });
+        // Mở thư viện chọn nhiều ảnh
+        btnSelectImage.setOnClickListener(v -> pickMultipleImagesLauncher.launch("image/*"));
 
+        // Validate rồi lấy tọa độ → upload ảnh → lưu Firestore
         btnSavePlace.setOnClickListener(v -> {
             if (selectedImageUris.isEmpty()) {
                 Toast.makeText(this, "Vui lòng chọn ít nhất 1 ảnh (tối đa 3)!", Toast.LENGTH_SHORT).show();
@@ -155,16 +159,62 @@ public class AddPlaceActivity extends AppCompatActivity {
                 return;
             }
 
-            uploadImagesToCloudinary();
+            // Bước 1: lấy tọa độ từ địa chỉ
+            layToaDoTuDiaChi();
         });
 
         btnBack.setOnClickListener(v -> finish());
     }
 
-    // Duyệt mảng URI và đẩy lên Cloudinary
-    private void uploadImagesToCloudinary() {
+    // Dùng Geocoder chuyển địa chỉ → lat/lng, chạy trên thread phụ tránh block UI
+    private void layToaDoTuDiaChi() {
+        String address = edtPlaceAddress.getText().toString().trim();
+
         progressBar.setVisibility(View.VISIBLE);
         btnSavePlace.setEnabled(false);
+        btnSavePlace.setText("Đang lấy tọa độ...");
+
+        new Thread(() -> {
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<Address> results = geocoder.getFromLocationName(address, 1);
+
+                runOnUiThread(() -> {
+                    if (results != null && !results.isEmpty()) {
+                        // Lấy tọa độ đầu tiên trả về
+                        resolvedLat = results.get(0).getLatitude();
+                        resolvedLng = results.get(0).getLongitude();
+
+                        tvLatLng.setVisibility(View.VISIBLE);
+                        tvLatLng.setTextColor(0xFF4CAF50);
+                        tvLatLng.setText("📍 " + resolvedLat + ", " + resolvedLng);
+                    } else {
+                        // Không tìm được tọa độ, vẫn cho đăng nhưng cảnh báo
+                        resolvedLat = 0.0;
+                        resolvedLng = 0.0;
+                        tvLatLng.setVisibility(View.VISIBLE);
+                        tvLatLng.setTextColor(0xFFFF5722);
+                        tvLatLng.setText("⚠️ Không tìm thấy tọa độ, bản đồ sẽ không hiển thị đúng");
+                    }
+
+                    // Bước 2: upload ảnh
+                    uploadImagesToCloudinary();
+                });
+
+            } catch (IOException e) {
+                runOnUiThread(() -> {
+                    resolvedLat = 0.0;
+                    resolvedLng = 0.0;
+                    Toast.makeText(this, "Không thể lấy tọa độ, vẫn tiếp tục đăng.", Toast.LENGTH_SHORT).show();
+                    // Vẫn tiếp tục dù không có tọa độ
+                    uploadImagesToCloudinary();
+                });
+            }
+        }).start();
+    }
+
+    // Upload từng ảnh lên Cloudinary, đếm đủ thì lưu Firestore
+    private void uploadImagesToCloudinary() {
         btnSavePlace.setText("Đang tải ảnh lên (0/" + selectedImageUris.size() + ")...");
 
         List<String> uploadedUrls = new ArrayList<>();
@@ -179,6 +229,7 @@ public class AddPlaceActivity extends AppCompatActivity {
                         uploadedUrls.add(imageUrl);
                         btnSavePlace.setText("Đang tải ảnh lên (" + uploadSuccessCount + "/" + selectedImageUris.size() + ")...");
 
+                        // Đủ số ảnh thì lưu Firestore
                         if (uploadSuccessCount == selectedImageUris.size()) {
                             btnSavePlace.setText("ĐANG LƯU DỮ LIỆU...");
                             savePlaceToFirestore(uploadedUrls);
@@ -189,7 +240,6 @@ public class AddPlaceActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
-                        // Nếu đang hiện Loading thì tắt đi và báo lỗi
                         if (progressBar.getVisibility() == View.VISIBLE) {
                             progressBar.setVisibility(View.GONE);
                             btnSavePlace.setEnabled(true);
@@ -203,9 +253,9 @@ public class AddPlaceActivity extends AppCompatActivity {
     }
 
     private void savePlaceToFirestore(List<String> imageUrls) {
-        String name = edtPlaceName.getText().toString().trim();
-        String address = edtPlaceAddress.getText().toString().trim();
-        String category = tvPlaceCategory.getText().toString().trim();
+        String name        = edtPlaceName.getText().toString().trim();
+        String address     = edtPlaceAddress.getText().toString().trim();
+        String category    = tvPlaceCategory.getText().toString().trim();
         String description = edtPlaceDescription.getText().toString().trim();
 
         Place newPlace = new Place();
@@ -215,6 +265,10 @@ public class AddPlaceActivity extends AppCompatActivity {
         newPlace.setDescription(description);
         newPlace.setImageUrls(imageUrls);
         newPlace.setAvgRating(0.0);
+
+        // Gán tọa độ đã lấy từ Geocoder
+        newPlace.setLat(resolvedLat);
+        newPlace.setLng(resolvedLng);
 
         placeRepository.addPlace(newPlace, task -> {
             if (task.isSuccessful()) {

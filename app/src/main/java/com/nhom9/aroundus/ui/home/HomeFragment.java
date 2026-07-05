@@ -177,7 +177,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             String[] categories = {
                     "Tất cả",
                     "Quán ăn",
-                    "Cà phê",
+                    "Quán cf",
                     "Mua sắm",
                     "Khu vui chơi"
             };
